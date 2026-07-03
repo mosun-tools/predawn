@@ -1288,7 +1288,7 @@
       t:{ en:'release plan', zh:'發行計畫' }, s:{ en:'the road to october', zh:'通往十月的路' } },
     { id:'machine', rn:'v',   face:'img/crowd-sq.jpg',
       t:{ en:'the machine', zh:'行銷系統' }, s:{ en:'a system, already running', zh:'系統，已經在跑' } },
-    { id:'live',    rn:'vi',  face:'img/stage-sq.jpg',
+    { id:'live',    rn:'vi',  face:'img/live-amber.jpg',
       t:{ en:'live', zh:'現場' }, s:{ en:'on the road, july to december', zh:'七月到十二月都在路上' } },
     { id:'contact', rn:'vii', face:'img/grammy-sq.jpg',
       t:{ en:'contact', zh:'聯絡' }, s:{ en:"the sun's almost up", zh:'天快亮了' } }
@@ -1328,19 +1328,20 @@
     });
   }
 
-  /* entrance — the circles surface out of the sun's glow below the horizon,
-     unwinding into the helix one after another, with a soft overshoot as they settle */
-  var introT0 = 0, introDur = 1150, introLift = 1, introDone = true;
-  function introPlay(dur, lift){
+  /* entrance — the night assembles its orbit: a point of light blooms into the
+     first circle, and the rest corkscrew out from behind it along the helix,
+     each trailing a saffron shimmer that fades as it finds its seat */
+  var introT0 = 0, introDur = 1150, introAmt = 1, introDone = true;
+  function introPlay(dur, amt){
     if(prefersReduced){ introDone = true; return; }
-    introT0 = performance.now(); introDur = dur; introLift = lift; introDone = false;
+    introT0 = performance.now(); introDur = dur; introAmt = amt; introDone = false;
   }
   function introK(i, now){
-    var t = (now - introT0 - i*110) / introDur;
+    var t = (now - introT0 - i*130) / introDur;
     if(t <= 0) return 0;
     if(t >= 1) return 1;
     var s = 1.2; t -= 1;
-    return 1 + t*t*((s+1)*t + s); /* easeOutBack — rises a touch past its seat, then settles */
+    return 1 + t*t*((s+1)*t + s); /* easeOutBack — swings a touch past the seat, then settles */
   }
   function layoutDeck(){
     var isMobile = innerWidth < 700;
@@ -1351,34 +1352,35 @@
     var settled = true;
     for(var i = 0; i < N; i++){
       var d = i - vPos;
-      var a = d * 0.85;
-      var x = Math.sin(a) * RX;
-      var z = (Math.cos(a) - 1) * RZ - Math.abs(d)*60;
-      var y = d * (isMobile ? -30 : -44);
-      var rY = Math.sin(a) * -24;
       var ad = Math.abs(d);
       var el = deckEls[i];
-      var k = 1, kc = 1, sc = 1;
+      var k = 1, kc = 1, glow = 0;
       if(!introDone){
         k = introK(i, now);
         if(k < 1) settled = false;
         kc = Math.max(0, Math.min(1, k));
-        var lift = 1 - k;
-        x *= 0.3 + 0.7*k;                                    /* gathered over the glow, spreading out */
-        y += lift * (innerHeight*0.62 + i*36) * introLift;   /* rising from below the horizon */
-        z += lift * -160;
-        rY += lift * -38;                                    /* unwinding as they climb */
-        sc = 0.72 + 0.28*k;
+        glow = Math.sin(Math.PI * kc) * (i === 0 ? 0.5 : 0.3) * introAmt;
       }
-      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' + rY + 'deg)' + (introDone ? '' : ' scale(' + sc.toFixed(3) + ')');
-      var blur = Math.min(9, ad*2.6 + (ad > 0.35 ? vel : vel*0.4)) + (1-kc)*9;
+      /* wound tighter around the spiral at k=0, unwinding into place at k=1 */
+      var a = d * (0.85 + (1 - k) * 1.15 * introAmt);
+      var x = Math.sin(a) * RX * (introDone ? 1 : 0.3 + 0.7*k);
+      var z = (Math.cos(a) - 1) * RZ - ad*60 + (introDone ? 0 : (1 - k) * -320 * introAmt);
+      var y = d * (isMobile ? -30 : -44) * (introDone ? 1 : 0.55 + 0.45*k) + (introDone ? 0 : (1 - kc) * 34 * introAmt);
+      var rY = Math.sin(a) * -24 - (introDone ? 0 : (1 - k) * 26 * introAmt);
+      var sc = introDone ? 1 : (i === 0 ? 0.18 + 0.82*k : 0.55 + 0.45*k);
+      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' + rY + 'deg)' + (introDone ? '' : ' scale(' + Math.max(0.05, sc).toFixed(3) + ')');
+      var blur = Math.min(9, ad*2.6 + (ad > 0.35 ? vel : vel*0.4)) + (1-kc)*7;
       el.style.filter = 'blur(' + blur.toFixed(2) + 'px)';
-      el.style.opacity = String(Math.max(0, 1 - ad*0.26) * kc);
+      el.style.opacity = String(Math.max(0, 1 - ad*0.26) * Math.min(1, kc*1.35));
       el.style.zIndex = String(100 - Math.round(ad*10));
       el.style.visibility = ad > 3.6 ? 'hidden' : 'visible';
+      if(!introDone) el.style.boxShadow = glow > 0.01 ? '0 0 72px -6px rgba(246,162,92,' + glow.toFixed(3) + ')' : '';
       if(ad < 0.35){ el.classList.add('focus'); } else { el.classList.remove('focus'); }
     }
-    if(!introDone && settled) introDone = true;
+    if(!introDone && settled){
+      introDone = true;
+      for(var j = 0; j < N; j++) deckEls[j].style.boxShadow = '';
+    }
   }
 
   /* idle hint — after 3 seconds with no input, quietly say what to do next */
@@ -1553,7 +1555,7 @@
       if(ambienceOn){
         maybeShowGuide();
         if(guideShowing()){ introPlay(1150, 1); introT0 = Infinity; }
-        else introPlay(650, 0.35); /* returning from list — a quicker, shallower rise */
+        else introPlay(650, 0.45); /* returning from list — a quicker, shallower assembly */
       }
     }
     armIdle();
