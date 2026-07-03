@@ -1,0 +1,1766 @@
+<!doctype html>
+<html lang="en" data-lang="en" data-view="spiral">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>mosun · see you at sunrise</title>
+<link rel="icon" type="image/svg+xml" href="img/logo.svg">
+<link rel="preload" as="font" type="font/otf" href="fonts/Prospec.otf" crossorigin>
+<link rel="preload" as="font" type="font/otf" href="fonts/Rosnoc.otf" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ===== MOSUN theme (BRAND.md / ember listening room) ===== */
+  @font-face{ font-family:'Prospec'; src:url('fonts/Prospec.otf') format('opentype'); font-weight:400; font-display:swap; }
+  @font-face{ font-family:'Rosnoc'; src:url('fonts/Rosnoc.otf') format('opentype'); font-display:swap; }
+  :root{
+    --ink:#000000; --cream:#E8E6D9;
+    --saffron:#F6A25C; --saffron-wash:#FDE7D2; --saffron-soft:#FBC89A; --saffron-hover:#D8823A; --saffron-press:#B8661F;
+    --n1:#DEDCD0; --n2:#B9B7AC; --n3:#8A8880; --n4:#5C5B55; --n5:#2E2D2B;
+    --hairline:rgba(232,230,217,0.14); --border-strong:rgba(232,230,217,0.28);
+    --r-pill:999px; --r-card:14px; --r-input:6px;
+    --ease:cubic-bezier(0.16,1,0.3,1);
+    --font-display:'Prospec','Futura PT','Century Gothic','Noto Sans TC',sans-serif;
+    --font-deco:'Rosnoc',cursive;
+    --font-body:'Futura','Futura PT','Trebuchet MS','Century Gothic','Avenir','Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;
+    --font-quote:'Cormorant Garamond','Noto Sans TC',Georgia,serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ background:var(--ink); color:var(--cream); }
+  body{ font-family:var(--font-body); line-height:1.65; font-weight:400; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+  html[data-lang="zh"] body{ letter-spacing:.02em; }
+  html:has(body.locked){ overflow:hidden; }
+  body.locked{ overflow:hidden; }
+  body.locked main, body.locked footer, body.locked .topbar, body.locked #nightclock,
+  body.locked #deck, body.locked #caption, body.locked #badge{ visibility:hidden; }
+  ::selection{ background:var(--saffron); color:var(--ink); }
+  a{ color:var(--saffron); text-decoration:none; }
+  img{ display:block; max-width:100%; height:auto; }
+
+  /* language switching */
+  html[data-lang="en"] .zh{ display:none; }
+  html[data-lang="zh"] .en{ display:none; }
+
+  /* ===== fixed ambience (ember world: sky, glints, sand, the sun) ===== */
+  #particles{ position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0; transition:opacity 2s var(--ease); }
+  #particles.on{ opacity:1; }
+  /* the ink-bloom sun (ported from the bloom listening room) — rises + brightens with journey progress */
+  #bloomwrap{ position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0; transition:opacity 2.6s var(--ease); }
+  #bloomwrap.on{ opacity:1; }
+  #bloom, #bloomfb{ position:absolute; inset:0; display:block; width:100%; height:100%; }
+  #bloom{ background:#000; }
+  /* css-only fallback: static ember low in the frame (shows when webgl is unavailable) */
+  #bloomfb{
+    background:
+      radial-gradient(circle at 61% 80%, rgba(50,26,40,0.30) 0%, rgba(50,26,40,0) 40%),
+      radial-gradient(circle at 50% 88%, #FFF6E8 0%, #F6A25C 4%, #D8823A 9%, #5A2E10 22%, #170D04 40%, #000 64%);
+    animation:inkdrift 34s ease-in-out infinite; will-change:transform; transform:scale(1.05);
+  }
+  @keyframes inkdrift{ 0%,100%{ transform:scale(1.05) translate(0,0); } 50%{ transform:scale(1.10) translate(-1.1%,0.9%); } }
+  #bloomwrap.live #bloomfb{ animation:none; }
+  @media (prefers-reduced-motion: reduce){ #bloomfb{ animation:none; } }
+  /* soft scrim over the bloom so cards + copy stay readable as the sky brightens */
+  .vignette{ position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(ellipse 64% 48% at 50% 47%, rgba(0,0,0,0.44), rgba(0,0,0,0) 74%);
+    opacity:calc(0.5 + var(--rise, 0)*0.5); }
+  /* list view puts copy straight over the bloom — wider scrim + soft text shadow keep sunrise readable */
+  html[data-view="list"] .vignette{ background:radial-gradient(ellipse 78% 66% at 50% 56%, rgba(0,0,0,0.62), rgba(0,0,0,0.05) 85%); }
+  html[data-view="list"] main, html[data-view="list"] footer{ text-shadow:0 1px 16px rgba(0,0,0,0.6), 0 0 3px rgba(0,0,0,0.4); }
+  html[data-view="list"] .btn:not(.primary){ background:rgba(0,0,0,0.45); }
+  .sunrise{ position:fixed; left:50%; top:60%; width:160vw; height:160vw; transform:translate(-50%,-30%) scale(.3); border-radius:50%; z-index:1; opacity:0; pointer-events:none;
+    background:radial-gradient(circle, rgba(246,162,92,0.30), rgba(246,162,92,0.08) 40%, transparent 66%); transition:opacity 1.8s var(--ease), transform 2.2s var(--ease); }
+  .sunrise.on{ opacity:1; transform:translate(-50%,-30%) scale(1); }
+  .grain{ position:fixed; inset:0; z-index:60; pointer-events:none; opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E"); }
+  @media (prefers-reduced-motion: reduce){ #particles{ display:none; } }
+
+  /* ===== custom cursor + light trail (desktop) ===== */
+  #cursor{ position:fixed; top:0; left:0; width:41px; height:41px; margin:-20.5px 0 0 -20.5px; border-radius:50%;
+    border:1px solid var(--saffron); z-index:120; pointer-events:none; mix-blend-mode:difference; opacity:0;
+    transition:width .35s var(--ease), height .35s var(--ease), margin .35s var(--ease), opacity .4s var(--ease), background .35s var(--ease); }
+  #cursor.show{ opacity:1; }
+  #cursor.grow{ width:74px; height:74px; margin:-37px 0 0 -37px; background:rgba(246,162,92,0.216); box-shadow:0 0 24px rgba(246,162,92,0.33); }
+  #trail{ position:fixed; inset:0; z-index:115; pointer-events:none; }
+  @media (pointer:coarse){ #cursor,#trail{ display:none; } }
+  @media (prefers-reduced-motion: reduce){ #cursor,#trail{ display:none; } }
+
+  /* ===== gate ===== */
+  #gate{ position:fixed; inset:0; z-index:200; background:var(--ink); display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:24px; transition:opacity 1s var(--ease); touch-action:none; overscroll-behavior:contain; }
+  #gate.open{ opacity:0; pointer-events:none; }
+  .gate-inner{ max-width:380px; width:100%; }
+  .gate-inner .mark{ width:72px; height:72px; margin:0 auto 22px; }
+  .gate-word{ font-family:var(--font-display); font-weight:400; font-size:22px; letter-spacing:0.34em; text-indent:0.34em; text-transform:uppercase; margin-bottom:8px; }
+  .gate-note{ font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:var(--n3); margin-bottom:40px; }
+  #gate form{ display:flex; flex-direction:column; gap:20px; align-items:center; }
+  #pw{ width:100%; max-width:300px; font-family:var(--font-display); font-size:22px; letter-spacing:0.22em; text-transform:uppercase; text-align:center;
+    color:var(--cream); background:transparent; border:none; border-bottom:1px solid var(--border-strong); border-radius:0; padding:12px 2px; outline:none; }
+  #pw:focus{ border-color:var(--saffron); }
+  #pw::placeholder{ color:var(--n4); font-family:var(--font-body); font-size:14px; letter-spacing:0.1em; text-transform:none; }
+  .btn{ font-family:var(--font-body); font-size:12px; letter-spacing:0.2em; text-transform:uppercase; padding:15px 34px;
+    border-radius:var(--r-pill); border:1px solid var(--border-strong); background:transparent; color:var(--cream); cursor:pointer; position:relative;
+    transition:border-color .8s var(--ease), background .8s var(--ease), color .8s var(--ease), box-shadow .8s var(--ease); will-change:transform; }
+  .btn:hover{ border-color:var(--saffron); box-shadow:0 0 0 1px var(--saffron), 0 0 40px -6px var(--saffron); }
+  .btn.primary{ background:var(--saffron); color:var(--ink); border-color:var(--saffron); }
+  .btn.primary:hover{ background:var(--saffron-hover); border-color:var(--saffron-hover); box-shadow:0 0 52px -6px var(--saffron); }
+  .btn.small{ padding:11px 22px; font-size:11px; }
+  .quietlink{ font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--n3); background:none; border:none; cursor:pointer; }
+  .quietlink:hover{ color:var(--saffron); }
+  #gate-err{ font-size:12px; letter-spacing:0.14em; color:var(--saffron-soft); min-height:20px; }
+  .gate-help{ font-size:12px; color:var(--n3); margin-top:30px; line-height:2; }
+  .gate-help a{ color:var(--n2); border-bottom:1px solid var(--hairline); }
+  .shake{ animation:shake .4s; }
+  @keyframes shake{ 20%{ transform:translateX(-6px); } 50%{ transform:translateX(5px); } 80%{ transform:translateX(-3px); } }
+  .gate-lang{ position:absolute; top:18px; right:20px; }
+
+  /* ===== preloader ===== */
+  #pre{ position:fixed; inset:0; z-index:190; background:var(--ink); display:none; flex-direction:column; align-items:center; justify-content:center; gap:26px;
+    transition:opacity 1s var(--ease); }
+  #pre.show{ display:flex; }
+  #pre.gone{ opacity:0; pointer-events:none; }
+  #pre .mark{ width:64px; height:64px; }
+  #pre .count{ font-family:var(--font-display); font-weight:400; font-size:clamp(64px,16vw,140px); line-height:1; color:var(--saffron); font-variant-numeric:tabular-nums; }
+  #pre .lbl{ font-size:10px; letter-spacing:0.4em; text-transform:uppercase; color:var(--n3); }
+
+  /* ===== topbar ===== */
+  .topbar{ position:fixed; top:0; left:0; right:0; z-index:90; display:flex; justify-content:space-between; align-items:center; padding:16px 20px; pointer-events:none;
+    background:linear-gradient(rgba(0,0,0,.72), transparent); }
+  .topbar > *{ pointer-events:auto; }
+  .markk{ font-family:var(--font-display); font-weight:400; font-size:12px; letter-spacing:0.32em; text-transform:uppercase; color:var(--n2); display:flex; align-items:center; gap:9px; }
+  .markk img{ width:20px; height:20px; }
+  .markk .dot{ color:var(--saffron); }
+  .topbar .right{ display:flex; align-items:center; gap:8px; }
+  .iconbtn{ font-family:var(--font-body); font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--n3);
+    background:rgba(0,0,0,0.4); border:1px solid var(--hairline); border-radius:var(--r-pill); padding:7px 13px; cursor:pointer;
+    transition:color .5s var(--ease), border-color .5s var(--ease); }
+  .iconbtn:hover{ color:var(--saffron); border-color:var(--saffron); }
+  .lang-toggle{ display:flex; align-items:center; gap:2px; background:rgba(0,0,0,0.4); border:1px solid var(--hairline); border-radius:var(--r-pill); padding:3px 6px; }
+  .lang-toggle button{ background:transparent; border:0; color:var(--n3); font-family:var(--font-body); font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+    padding:4px 7px; cursor:pointer; transition:color .4s var(--ease); }
+  .lang-toggle button[aria-pressed="true"]{ color:var(--saffron); }
+  .lang-toggle .sep{ color:var(--n5); font-size:10px; }
+  @media (max-width:600px){
+    .markk{ font-size:11px; letter-spacing:0.22em; gap:7px; }
+    .markk .dot, .markk .suffix{ display:none; }
+    .iconbtn{ padding:6px 10px; }
+  }
+
+  /* view toggle — spiral · list (center of topbar, like the reference) */
+  #viewtoggle{ position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:91; display:flex; align-items:center; gap:10px;
+    font-size:10px; letter-spacing:0.22em; text-transform:uppercase; }
+  #viewtoggle button{ background:none; border:none; font:inherit; letter-spacing:inherit; text-transform:inherit; cursor:pointer; color:var(--n4); padding:6px 2px; transition:color .5s var(--ease); }
+  #viewtoggle button[aria-pressed="true"]{ color:var(--cream); }
+  #viewtoggle .mid{ width:4px; height:4px; border-radius:50%; background:var(--saffron); }
+  @media (max-width:600px){ #viewtoggle{ top:60px; } }
+
+  /* ===== the deck (spiral of cards) ===== */
+  #deck{ position:fixed; inset:0; z-index:10; perspective:1200px; overflow:hidden; touch-action:none; cursor:grab; }
+  #deck.dragging{ cursor:grabbing; }
+  html[data-view="list"] #deck, html[data-view="list"] #caption, html[data-view="list"] #badge{ display:none; }
+  html[data-view="spiral"]{ overflow:hidden; }
+  html[data-view="spiral"] body{ overflow:hidden; height:100vh; }
+  html[data-view="spiral"] main{ display:none; }
+  html[data-view="spiral"] footer{ display:none; }
+  html[data-view="spiral"] .marquee{ display:none; }
+
+  .card3d{ position:absolute; left:50%; top:50%; width:min(74vw,400px); aspect-ratio:1/1; margin-left:max(-37vw,-200px); margin-top:max(-37vw,-200px);
+    border-radius:50%; border:1px solid var(--hairline); background:#070707; overflow:hidden;
+    will-change:transform,filter,opacity; transform-style:preserve-3d; backface-visibility:hidden; cursor:pointer; }
+  .card3d .face{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:13% 15%; }
+  .card3d .ph{ position:absolute; inset:0; background-size:cover; background-position:center; opacity:.62; }
+  .card3d .veil{ position:absolute; inset:0; background:radial-gradient(circle at 50% 36%, rgba(0,0,0,.14), rgba(0,0,0,.64) 82%); }
+  .card3d .rn{ font-family:var(--font-deco); font-size:44px; color:var(--saffron); line-height:1; position:relative; }
+  .card3d .t{ font-family:var(--font-display); font-weight:400; font-size:clamp(17px,2.6vw,24px); letter-spacing:0.22em; text-indent:0.22em; text-transform:uppercase; color:var(--cream); position:relative; }
+  .card3d .s{ font-size:10px; letter-spacing:0.26em; text-transform:uppercase; color:var(--n2); position:relative; }
+  .card3d.focus{ border-color:rgba(246,162,92,.7); box-shadow:0 0 0 1px rgba(246,162,92,.4), 0 0 90px -24px var(--saffron); }
+  .card3d .biglogo{ width:30%; position:relative; }
+  .card3d .wordline{ font-family:var(--font-display); font-size:clamp(20px,3vw,28px); letter-spacing:0.34em; text-indent:0.34em; text-transform:uppercase; position:relative; }
+  .card3d .cue{ position:relative; font-size:9px; letter-spacing:.26em; text-transform:uppercase; color:var(--n3);
+    display:flex; flex-direction:column; align-items:center; gap:5px; margin-top:4px; }
+  .card3d .cue .arr{ color:var(--saffron); animation:bob 2.4s var(--ease) infinite; }
+  @media (prefers-reduced-motion: reduce){ .card3d .cue .arr{ animation:none; } }
+
+  /* caption pill (bottom center, like the reference) */
+  #caption{ position:fixed; left:50%; bottom:64px; transform:translateX(-50%); z-index:85; display:flex; align-items:center; gap:12px; white-space:nowrap;
+    background:rgba(3,3,3,0.88); border:1px solid var(--border-strong); border-radius:var(--r-pill); padding:11px 20px;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); cursor:pointer; max-width:92vw;
+    transition:border-color .6s var(--ease), box-shadow .6s var(--ease); }
+  #caption:hover{ border-color:var(--saffron); box-shadow:0 0 40px -10px var(--saffron); }
+  #caption .cn{ font-family:var(--font-deco); font-size:17px; color:var(--saffron); line-height:1; }
+  #caption .ct{ font-size:11px; letter-spacing:0.22em; text-transform:uppercase; color:var(--cream); overflow:hidden; text-overflow:ellipsis; }
+  #caption .plus{ color:var(--saffron); font-size:14px; line-height:1; }
+
+  /* night clock */
+  #nightclock{ position:fixed; bottom:18px; right:18px; z-index:85; white-space:nowrap;
+    font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--n2); font-variant-numeric:tabular-nums;
+    background:rgba(3,3,3,0.85); border:1px solid var(--hairline); border-radius:var(--r-pill); padding:8px 14px;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); transition:color .8s var(--ease), border-color .8s var(--ease); }
+  #nightclock.up{ color:var(--saffron); border-color:var(--saffron); }
+
+  /* spinning badge (bottom-left, like the reference's showreel disc) */
+  #badge{ position:fixed; left:18px; bottom:18px; z-index:85; width:92px; height:92px; pointer-events:none; }
+  #badge svg{ width:100%; height:100%; overflow:visible; }
+  #badge .ring{ animation:spinbadge 22s linear infinite; transform-origin:50% 50%; }
+  #badge text{ font-family:var(--font-body); font-size:9.5px; letter-spacing:.24em; text-transform:uppercase; fill:var(--n2); }
+  #badge image{ }
+  @keyframes spinbadge{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ #badge .ring{ animation:none; } }
+  @media (max-width:600px){ #badge{ width:74px; height:74px; } }
+
+  /* ===== first-visit guide (how to navigate the spiral) ===== */
+  #guide{ position:fixed; inset:0; z-index:150; display:none; align-items:center; justify-content:center; text-align:center; padding:26px;
+    background:rgba(0,0,0,0.82); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); transition:opacity .8s var(--ease); }
+  #guide.show{ display:flex; }
+  #guide.gone{ opacity:0; pointer-events:none; }
+  .guide-inner{ max-width:430px; display:flex; flex-direction:column; gap:24px; align-items:center; }
+  .guide-k{ font-size:10px; letter-spacing:0.32em; text-transform:uppercase; color:var(--saffron); }
+  .guide-row{ display:flex; align-items:center; gap:18px; text-align:left; }
+  .guide-row svg{ flex:0 0 auto; width:42px; height:42px; }
+  .guide-row .tx{ font-size:14px; color:var(--n1); line-height:1.6; }
+  .guide-note{ font-size:11px; letter-spacing:.06em; color:var(--n3); margin:0; }
+  @keyframes nudge{ 0%,100%{ transform:translateY(-3px); } 50%{ transform:translateY(3px); } }
+  #guide .nud{ animation:nudge 2.2s var(--ease) infinite; }
+  @media (prefers-reduced-motion: reduce){ #guide .nud{ animation:none; } }
+
+  /* idle hint — appears after 3s of no input, floats above the caption pill */
+  #openhint{ position:fixed; left:50%; bottom:118px; transform:translateX(-50%); z-index:140; pointer-events:none; white-space:nowrap;
+    font-size:10px; letter-spacing:0.26em; text-transform:uppercase; color:var(--saffron); opacity:0; transition:opacity .8s var(--ease); }
+  #openhint .oh{ display:none; }
+  #openhint[data-k="scroll"] .oh-scroll, #openhint[data-k="open"] .oh-open, #openhint[data-k="panel"] .oh-panel{ display:inline; }
+  #openhint.show{ opacity:1; animation:hintpulse 2.6s var(--ease) infinite; }
+  @keyframes hintpulse{ 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
+  @media (prefers-reduced-motion: reduce){ #openhint.show{ animation:none; opacity:.8; } }
+  html[data-view="list"] #openhint{ display:none; }
+  body.panel-open #openhint:not([data-k="panel"]){ display:none; }
+
+  /* ===== reading panel (a focused card, opened) ===== */
+  body.panel-open main{ display:block !important; position:fixed; inset:0; z-index:130; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background:rgba(0,0,0,0.93); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+  body.panel-open main section:not(.active){ display:none !important; }
+  body.panel-open main section.active{ display:block; min-height:100%; padding-top:110px; }
+  #panelclose{ position:fixed; top:16px; right:20px; z-index:140; display:none; }
+  body.panel-open #panelclose{ display:block; }
+  body.panel-open .topbar{ z-index:135; padding-bottom:26px; background:linear-gradient(180deg, #000 0%, #000 62%, rgba(0,0,0,0) 100%); }
+  body.panel-open #panelclose{ background:rgba(0,0,0,.88); }
+  body.panel-open .topbar .right{ visibility:hidden; }
+  body.panel-open #viewtoggle, body.panel-open #caption{ display:none; }
+
+  /* ===== layout (list view + panel content) ===== */
+  main{ position:relative; z-index:2; }
+  section{ position:relative; padding:128px 24px; }
+  .wrap{ max-width:720px; margin:0 auto; }
+  #hero{ min-height:100vh; min-height:100svh; display:flex; align-items:center; text-align:center; padding-top:120px; }
+  #hero .wrap{ max-width:660px; }
+
+  .kicker{ font-size:10px; letter-spacing:0.32em; text-transform:uppercase; color:var(--saffron); margin-bottom:26px; display:flex; align-items:baseline; gap:12px; }
+  .kicker .rn{ font-family:var(--font-deco); font-size:19px; letter-spacing:0; text-transform:lowercase; line-height:1; }
+  #hero .kicker{ justify-content:center; }
+
+  .htitle{ font-weight:300; text-transform:uppercase; letter-spacing:0.04em; line-height:1.12;
+    font-size:clamp(30px,7.4vw,54px); margin-bottom:26px; color:var(--cream); }
+  html[data-lang="zh"] .htitle{ letter-spacing:0.1em; font-weight:300; }
+  .htitle .em{ font-family:var(--font-display); font-weight:400; color:var(--saffron); }
+  .htitle .word{ display:inline-block; }
+  .htitle .char{ display:inline-block; }
+  .split .char{ opacity:0; transform:translateY(120%) rotate(var(--r,0deg)); }
+  .sec.on .split .char{ opacity:1; transform:none; transition:opacity .7s var(--ease), transform .85s var(--ease); transition-delay:var(--d,0s); }
+
+  .wordmark{ font-family:var(--font-display); font-weight:400; font-size:clamp(38px,10vw,64px); letter-spacing:0.3em; text-indent:0.3em; text-transform:uppercase; margin-bottom:30px; }
+  .titleorb{ position:relative; display:inline-flex; margin:0 auto 34px; }
+  .titleorb::before{ content:''; position:absolute; inset:-16%; border-radius:50%; pointer-events:none;
+    background:radial-gradient(circle, rgba(246,162,92,0.28), transparent 68%); animation:breathe 5.6s var(--ease) infinite; }
+  .titleorb img{ width:min(24vw,104px); height:auto; position:relative; z-index:1; }
+  @keyframes breathe{ 0%,100%{ opacity:.4; transform:scale(.97); } 50%{ opacity:.82; transform:scale(1.05); } }
+  @media (prefers-reduced-motion: reduce){ .titleorb::before{ animation:none; } }
+
+  p{ margin-bottom:18px; font-size:16px; color:var(--cream); }
+  .muted{ color:var(--n2); font-size:15px; }
+  .quoteline{ font-family:var(--font-quote); font-style:italic; font-size:clamp(18px,4.6vw,23px); color:var(--saffron-soft); line-height:1.5; max-width:480px; margin:0 auto 56px; }
+  .scrollcue{ font-size:10px; letter-spacing:0.26em; text-transform:uppercase; color:var(--n3); }
+  .scrollcue .arr{ display:block; margin-top:10px; color:var(--saffron); animation:bob 2.4s var(--ease) infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0); opacity:.5; } 50%{ transform:translateY(6px); opacity:1; } }
+  @media (prefers-reduced-motion: reduce){ .scrollcue .arr{ animation:none; } }
+
+  .reveal-el{ opacity:0; transform:translateY(22px); transition:opacity .9s var(--ease), transform .9s var(--ease); transition-delay:var(--rd,0s); }
+  .sec.on .reveal-el{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce){
+    .reveal-el, .split .char{ opacity:1 !important; transform:none !important; transition:none !important; }
+  }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top:30px; }
+  .chips li{ list-style:none; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--n2);
+    border:1px solid var(--border-strong); border-radius:var(--r-pill); padding:9px 16px; }
+  .photo{ margin:44px 0 8px; border:1px solid var(--hairline); border-radius:var(--r-card); overflow:hidden; }
+  .photo img{ width:100%; }
+  .cap{ font-size:10px; color:var(--n3); letter-spacing:0.18em; text-transform:uppercase; margin-top:12px; }
+
+  .facts{ margin-top:40px; border-top:1px solid var(--hairline); }
+  .facts > div{ display:grid; grid-template-columns:140px 1fr; gap:14px; padding:16px 0; border-bottom:1px solid var(--hairline); font-size:14.5px; }
+  .facts dt{ font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--n3); padding-top:3px; }
+  .facts dd{ margin:0; color:var(--cream); }
+  @media (max-width:480px){ .facts > div{ grid-template-columns:1fr; gap:3px; } }
+
+  .marquee{ position:relative; z-index:2; overflow:hidden; white-space:nowrap; border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline); padding:14px 0; }
+  .marquee .run{ display:inline-block; will-change:transform; animation:marq 30s linear infinite; }
+  .marquee span{ font-family:var(--font-display); font-weight:400; font-size:14px; letter-spacing:0.3em; text-transform:uppercase; color:var(--n2); padding:0 22px; }
+  .marquee span b{ color:var(--saffron); font-weight:400; }
+  @keyframes marq{ to{ transform:translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce){ .marquee .run{ animation:none; } }
+
+  .tracks{ margin-top:38px; display:flex; flex-direction:column; gap:12px; }
+  .track{ border:1px solid var(--border-strong); border-radius:var(--r-card); padding:18px 22px; background:#070707;
+    display:flex; align-items:center; gap:18px; text-align:left; cursor:pointer; user-select:none; -webkit-user-select:none;
+    transition:border-color .5s var(--ease), box-shadow .7s var(--ease), transform .4s var(--ease); will-change:transform; }
+  .track:hover{ border-color:var(--saffron); transform:translateY(-2px); box-shadow:0 0 0 1px var(--saffron), 0 0 34px -12px var(--saffron); }
+  .track.featured{ border-color:rgba(246,162,92,.6); box-shadow:0 0 44px -18px var(--saffron); }
+  .track.playing{ border-color:var(--saffron); box-shadow:0 0 0 1px var(--saffron), 0 0 44px -14px var(--saffron); }
+  .track .meta{ flex:1; min-width:0; }
+  .track .title{ font-size:17px; color:var(--cream); letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .track .sub{ font-size:12px; color:var(--n3); margin-top:4px; letter-spacing:.06em; }
+  .pbtn{ width:42px; height:42px; min-width:42px; border-radius:50%; border:1px solid var(--border-strong); background:transparent;
+    position:relative; cursor:pointer; padding:0;
+    transition:border-color .5s var(--ease), background .5s var(--ease), box-shadow .7s var(--ease); }
+  .pbtn::before{ content:''; position:absolute; left:50%; top:50%; transform:translate(-40%,-50%);
+    border-style:solid; border-width:7px 0 7px 11px; border-color:transparent transparent transparent var(--saffron);
+    transition:opacity .25s var(--ease); }
+  .pbtn::after{ content:''; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:11px; height:13px;
+    border-left:3.5px solid var(--ink); border-right:3.5px solid var(--ink); opacity:0; transition:opacity .25s var(--ease); }
+  .track:hover .pbtn{ border-color:var(--saffron); }
+  .track.playing .pbtn{ background:var(--saffron); border-color:var(--saffron); box-shadow:0 0 26px -6px var(--saffron); }
+  .track.playing .pbtn::before{ opacity:0; }
+  .track.playing .pbtn::after{ opacity:1; }
+  .pbar{ margin-top:12px; padding:6px 0; cursor:pointer; touch-action:none; }
+  .pbar .pline{ display:block; position:relative; height:2px; background:var(--hairline); }
+  .pbar .pfill{ position:absolute; left:0; top:0; bottom:0; width:0%; background:var(--saffron);
+    box-shadow:0 0 10px rgba(246,162,92,.7); }
+  .ptime{ font-size:11px; letter-spacing:.12em; color:var(--n3); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .track.playing .ptime, .track.paused .ptime{ color:var(--saffron); }
+
+  /* now-playing pill — keeps control in reach while browsing elsewhere on the site */
+  #nowplaying{ position:fixed; right:18px; bottom:64px; z-index:140; display:none; align-items:center; gap:10px;
+    padding:11px 17px; border-radius:var(--r-pill); border:1px solid var(--border-strong); background:rgba(0,0,0,.78);
+    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); cursor:pointer;
+    font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--cream); }
+  #nowplaying.show{ display:flex; }
+  #nowplaying .npdot{ width:6px; height:6px; border-radius:50%; background:var(--saffron);
+    box-shadow:0 0 10px rgba(246,162,92,.8); animation:hintpulse 1.8s var(--ease) infinite; }
+  #nowplaying.paused .npdot{ animation:none; opacity:.45; box-shadow:none; }
+  #nowplaying .npt{ max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  @media (prefers-reduced-motion: reduce){ #nowplaying .npdot{ animation:none; } }
+  .lr-note{ margin-top:24px; font-size:12px; color:var(--n3); letter-spacing:.04em; }
+
+  .timeline{ margin-top:44px; border-left:1px solid var(--hairline); padding-left:32px; display:flex; flex-direction:column; gap:40px; }
+  .timeline li{ list-style:none; position:relative; }
+  .timeline li::before{ content:''; position:absolute; left:-36.5px; top:7px; width:9px; height:9px; border-radius:50%;
+    background:var(--saffron); box-shadow:0 0 14px rgba(246,162,92,.65); }
+  .timeline .when{ font-size:10px; letter-spacing:0.26em; text-transform:uppercase; color:var(--saffron); margin-bottom:7px; }
+  .timeline .what{ font-size:17px; color:var(--cream); }
+  .timeline .why{ font-size:13.5px; color:var(--n2); margin-top:4px; }
+
+  .machine{ margin-top:40px; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:600px){ .machine{ grid-template-columns:1fr; } }
+  .cell{ border:1px solid var(--border-strong); border-radius:var(--r-card); padding:24px; background:#070707;
+    transition:border-color .5s var(--ease), box-shadow .7s var(--ease), transform .4s var(--ease); will-change:transform; }
+  .cell:hover{ border-color:var(--saffron); transform:translateY(-2px); box-shadow:0 0 0 1px var(--saffron), 0 0 34px -14px var(--saffron); }
+  .cell h3{ font-size:10px; letter-spacing:0.26em; text-transform:uppercase; color:var(--saffron); font-weight:400; margin-bottom:12px; }
+  .cell p{ font-size:14px; color:var(--n1); margin:0; line-height:1.7; }
+
+  .dates{ margin-top:38px; border-top:1px solid var(--hairline); }
+  .dates li{ list-style:none; display:flex; justify-content:space-between; gap:16px; padding:18px 2px; border-bottom:1px solid var(--hairline);
+    font-size:15.5px; flex-wrap:wrap; align-items:baseline; }
+  .dates .when{ font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:var(--saffron); }
+  .dates .when.tba{ color:var(--n3); }
+
+  #contact{ padding-bottom:170px; text-align:center; }
+  #contact .kicker{ justify-content:center; }
+  .contact-ctas{ display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; margin:38px 0 8px; }
+  .signoff{ font-family:var(--font-display); font-weight:400; color:var(--saffron); font-size:clamp(20px,5vw,30px); letter-spacing:0.3em; text-indent:0.3em; text-transform:uppercase; margin-top:70px; }
+  .privnote{ margin-top:56px; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--n3); line-height:2.2; }
+  /* in list view the site footer sits right below the contact section — one copy of the note is enough */
+  html[data-view="list"] #contact .privnote{ display:none; }
+
+  footer{ position:relative; z-index:2; text-align:center; padding:36px 24px 52px; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--n3); line-height:2.2; }
+
+  .ripple{ position:fixed; z-index:110; pointer-events:none; border-radius:50%; width:14px; height:14px; margin:-7px 0 0 -7px;
+    background:radial-gradient(circle, rgba(246,162,92,0.65), transparent 78%); transform:scale(0); opacity:1; animation:rip 620ms var(--ease) forwards; }
+  @keyframes rip{ to{ transform:scale(26); opacity:0; } }
+  @media (prefers-reduced-motion: reduce){ .ripple{ display:none; } }
+</style>
+</head>
+<body class="locked">
+
+<div id="cursor"></div>
+<canvas id="trail"></canvas>
+<div id="bloomwrap" aria-hidden="true"><div id="bloomfb"></div><canvas id="bloom"></canvas></div>
+<canvas id="particles"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="sunrise" id="sunrise"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- soft gate. a deterrent, not security — the audio lives on disco behind its own access control. -->
+<div id="gate">
+  <nav class="lang-toggle gate-lang" aria-label="language">
+    <button type="button" data-setlang="en" aria-pressed="true" lang="en">en</button>
+    <span class="sep">/</span>
+    <button type="button" data-setlang="zh" aria-pressed="false" lang="zh-Hant">中文</button>
+  </nav>
+  <div class="gate-inner">
+    <img class="mark" src="img/logo.svg" alt="mosun monogram" width="330" height="330">
+    <div class="gate-word">mosun</div>
+    <p class="gate-note">
+      <span class="en">private listening page</span>
+      <span class="zh">私人試聽頁面</span>
+    </p>
+    <form id="gate-form" autocomplete="off">
+      <label for="pw" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">
+        <span class="en">password</span><span class="zh">密碼</span>
+      </label>
+      <input id="pw" type="password" placeholder="password · 密碼" autocapitalize="none" autocorrect="off">
+      <button type="submit" class="btn primary mag" data-sound="on"><span class="en">enter with sound</span><span class="zh">有聲進入</span></button>
+      <button type="submit" class="quietlink" data-sound="off"><span class="en">enter without sound</span><span class="zh">靜音進入</span></button>
+    </form>
+    <p id="gate-err" aria-live="polite"></p>
+    <p class="gate-help">
+      <span class="en">you should have received the password with this link.<br>if not — <a href="mailto:i@mosun.cool">i@mosun.cool</a></span>
+      <span class="zh">密碼應該已經跟這個連結一起給你了。<br>若沒有收到——<a href="mailto:i@mosun.cool">i@mosun.cool</a></span>
+    </p>
+    <noscript><p class="gate-help">this page needs javascript to open.</p></noscript>
+  </div>
+</div>
+
+<!-- preloader -->
+<div id="pre">
+  <img class="mark" src="img/logo.svg" alt="" width="330" height="330">
+  <div class="count" id="preCount">00</div>
+  <div class="lbl"><span class="en">loading the night</span><span class="zh">載入夜色</span></div>
+</div>
+
+<header class="topbar">
+  <a class="markk" href="#" id="homelink" aria-label="mosun — back to the first card">
+    <img src="img/logo.svg" alt="" width="330" height="330">mosun<span class="dot">·</span><span class="suffix"><span class="en">sunrise</span><span class="zh">日出</span></span>
+  </a>
+  <div class="right">
+    <button class="iconbtn" id="muteBtn" type="button">sound on</button>
+    <nav class="lang-toggle" aria-label="language">
+      <button type="button" data-setlang="en" aria-pressed="true" lang="en">en</button>
+      <span class="sep">/</span>
+      <button type="button" data-setlang="zh" aria-pressed="false" lang="zh-Hant">中文</button>
+    </nav>
+  </div>
+</header>
+
+<nav id="viewtoggle" aria-label="view">
+  <button type="button" data-setview="spiral" aria-pressed="true"><span class="en">spiral</span><span class="zh">星軌</span></button>
+  <span class="mid"></span>
+  <button type="button" data-setview="list" aria-pressed="false"><span class="en">list</span><span class="zh">列表</span></button>
+</nav>
+
+<div id="deck" aria-label="mosun — card deck"></div>
+
+<button id="caption" type="button" aria-label="open this card">
+  <span class="cn" id="cap-rn">m</span>
+  <span class="ct" id="cap-t"></span>
+  <span class="plus">+</span>
+</button>
+
+<button id="panelclose" class="iconbtn" type="button"><span class="en">close</span><span class="zh">關閉</span></button>
+
+<div id="guide" role="dialog" aria-label="how to navigate">
+  <div class="guide-inner">
+    <div class="guide-k"><span class="en">how it works</span><span class="zh">操作方式</span></div>
+    <div class="guide-row">
+      <svg class="nud" viewBox="0 0 42 42" fill="none" stroke="#F6A25C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="14" y="5" width="14" height="23" rx="7"/><line x1="21" y1="10.5" x2="21" y2="15.5"/>
+        <path d="M21 33v4"/><path d="M18.5 34.8 21 37.3l2.5-2.5"/>
+      </svg>
+      <div class="tx">
+        <span class="en">scroll, drag, or use the arrow keys — the circles travel the night.</span>
+        <span class="zh">滾動、拖曳、或用方向鍵——圓圈會帶你穿過夜晚。</span>
+      </div>
+    </div>
+    <div class="guide-row">
+      <svg viewBox="0 0 42 42" fill="none" stroke="#F6A25C" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <circle cx="21" cy="21" r="13"/><line x1="21" y1="16.5" x2="21" y2="25.5"/><line x1="16.5" y1="21" x2="25.5" y2="21"/>
+      </svg>
+      <div class="tx">
+        <span class="en">open with the button at the bottom — esc or close brings you back.</span>
+        <span class="zh">用底部的按鈕開啟——esc 或「關閉」都能回來。</span>
+      </div>
+    </div>
+    <p class="guide-note">
+      <span class="en">prefer a plain page — switch to list, top center. the sky brightens as you go.</span>
+      <span class="zh">想看一般版面——點上方的「列表」。往前走，天會越來越亮。</span>
+    </p>
+    <button class="btn primary mag" id="guideGo" type="button"><span class="en">begin the night</span><span class="zh">進入夜晚</span></button>
+  </div>
+</div>
+
+<div id="openhint" aria-hidden="true">
+  <span class="oh oh-scroll"><span class="en">scroll, drag, or use the arrow keys</span><span class="zh">滾動、拖曳，或用方向鍵</span></span>
+  <span class="oh oh-open"><span class="en">open with the button below</span><span class="zh">用下方按鈕開啟</span></span>
+  <span class="oh oh-panel"><span class="en">scroll to read — esc or close brings you back</span><span class="zh">捲動閱讀——esc 或「關閉」都能回來</span></span>
+</div>
+<div id="nowplaying" class="mag" role="button" tabindex="0" aria-label="pause or resume playback"><span class="npdot"></span><span class="npt"></span></div>
+
+<div id="nightclock" aria-hidden="true">03:00</div>
+
+<div id="badge" aria-hidden="true">
+  <svg viewBox="0 0 100 100">
+    <defs><path id="bpath" d="M 50,50 m -38,0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0"/></defs>
+    <g class="ring"><text><textPath href="#bpath">see you at sunrise • 10.23.2026 • 日出見 •</textPath></text></g>
+    <image href="img/logo.svg" x="34" y="34" width="32" height="32"/>
+  </svg>
+</div>
+
+<main>
+
+  <!-- 00 · hero -->
+  <section class="sec" id="hero">
+    <div class="wrap">
+      <div class="titleorb reveal-el"><img src="img/logo.svg" alt="mosun monogram" width="330" height="330"></div>
+      <h1 class="wordmark reveal-el">mosun</h1>
+      <h2 class="htitle">
+        <span class="en">for the ones who feel behind. you're not behind. you're <span class="em">awake.</span></span>
+        <span class="zh">給覺得自己落後的人。你沒有落後。你只是<span class="em">醒著</span>。</span>
+      </h2>
+      <p class="quoteline reveal-el" style="--rd:.15s">
+        <span class="en">honest music for the people who are only honest at 3am. cool on the surface, raw underneath.</span>
+        <span class="zh">寫給只在凌晨三點才誠實的人。表面很冷，底下很真。</span>
+      </p>
+      <div class="scrollcue reveal-el" style="--rd:.3s">
+        <span class="en">the night starts here — scroll toward sunrise</span>
+        <span class="zh">夜從這裡開始——往日出捲動</span>
+        <span class="arr">↓</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 01 · who is mosun -->
+  <section class="sec" id="who">
+    <div class="wrap">
+      <div class="kicker reveal-el"><span class="rn">i</span><span class="en">who is mosun</span><span class="zh">關於 mosun</span></div>
+      <h2 class="htitle">
+        <span class="en">ten years behind the <span class="em">glass.</span></span>
+        <span class="zh">十年，站在玻璃<span class="em">後面</span>。</span>
+      </h2>
+      <p class="reveal-el">
+        <span class="en">mosun is the artist project of morrison ma 馬仕釗 — artist and producer, based in taipei. a decade making other people's records: producer and arranger credits with 13 billion+ cumulative streams, including blackpink at coachella 2023 and jolin tsai 蔡依林.</span>
+        <span class="zh">mosun 是馬仕釗 morrison ma 的藝人計畫——現居台北的創作歌手與製作人。十年替別人做唱片：製作與編曲作品累積串流超過 130 億次，包括 blackpink 2023 coachella 舞台與蔡依林。</span>
+      </p>
+      <p class="reveal-el" style="--rd:.1s">
+        <span class="en">2026 golden melody award nominee — best arranger. grammy recording academy voting member. now the work turns inward: building mosun as a complete artist project — the voice, the sound, the world.</span>
+        <span class="zh">2026 金曲獎最佳編曲人入圍。葛萊美錄音學院投票會員。現在，鏡頭轉向自己：以 mosun 的身分做一個完整的藝人計畫——聲音、世界觀、全部。</span>
+      </p>
+      <ul class="chips reveal-el" style="--rd:.2s">
+        <li><span class="en">13b+ streams</span><span class="zh">串流 130 億+</span></li>
+        <li>blackpink · coachella 2023</li>
+        <li><span class="en">jolin tsai 蔡依林</span><span class="zh">蔡依林</span></li>
+        <li><span class="en">golden melody nominee 2026</span><span class="zh">2026 金曲獎入圍</span></li>
+        <li><span class="en">grammy voting member</span><span class="zh">葛萊美投票會員</span></li>
+      </ul>
+      <figure class="photo reveal-el" style="--rd:.25s">
+        <img src="img/night-silhouette.jpg" alt="mosun silhouetted in blue stage light" width="1600" height="1067" loading="lazy" decoding="async">
+      </figure>
+      <figure class="photo reveal-el">
+        <img src="img/grammy.jpg" alt="morrison ma at the grammy awards" width="900" height="1200" loading="lazy" decoding="async">
+        <figcaption class="cap">
+          <span class="en">recording academy · grammy awards</span>
+          <span class="zh">錄音學院 · 葛萊美獎</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 02 · the album -->
+  <section class="sec" id="album">
+    <div class="wrap">
+      <div class="kicker reveal-el"><span class="rn">ii</span><span class="en">the album</span><span class="zh">專輯</span></div>
+      <h2 class="htitle">
+        <span class="en">see you at <span class="em">sunrise</span></span>
+        <span class="zh">see you at <span class="em">sunrise</span></span>
+      </h2>
+      <p class="reveal-el">
+        <span class="en">12 tracks. debut album. october 23, 2026. made for the people awake at night — the arc runs night into sunrise, dark into light.</span>
+        <span class="zh">12 首歌。首張專輯。2026 年 10 月 23 日。做給夜裡還醒著的人——整張專輯的弧線，從黑夜走到日出，從暗走到光。</span>
+      </p>
+      <dl class="facts reveal-el" style="--rd:.1s">
+        <div>
+          <dt><span class="en">mastering</span><span class="zh">母帶後期</span></dt>
+          <dd><span class="en">john greenham — multi-grammy winner; billie eilish</span><span class="zh">john greenham——多座葛萊美得主；billie eilish</span></dd>
+        </div>
+        <div>
+          <dt><span class="en">features</span><span class="zh">合作藝人</span></dt>
+          <dd><span class="en">孫盛希 shi shi · j.sheon</span><span class="zh">孫盛希 · j.sheon</span></dd>
+        </div>
+        <div>
+          <dt><span class="en">support</span><span class="zh">補助</span></dt>
+          <dd><span class="en">taiwan ministry of culture (文化部) album grant</span><span class="zh">文化部專輯製作補助</span></dd>
+        </div>
+        <div>
+          <dt><span class="en">publishing</span><span class="zh">詞曲版權</span></dt>
+          <dd>更日未來有限公司 × warner chappell</dd>
+        </div>
+      </dl>
+      <figure class="photo reveal-el">
+        <img src="img/live-amber.jpg" alt="mosun on stage under a wall of amber light" width="1053" height="1600" loading="lazy" decoding="async">
+        <figcaption class="cap">
+          <span class="en">the arc, on stage — night into sunrise</span>
+          <span class="zh">整道弧線搬上舞台——從黑夜到日出</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true"><div class="run">
+    <span>see you at sunrise <b>•</b> 日出見 <b>•</b> 10.23.2026 <b>•</b> </span><span>see you at sunrise <b>•</b> 日出見 <b>•</b> 10.23.2026 <b>•</b> </span><span>see you at sunrise <b>•</b> 日出見 <b>•</b> 10.23.2026 <b>•</b> </span><span>see you at sunrise <b>•</b> 日出見 <b>•</b> 10.23.2026 <b>•</b> </span><span>see you at sunrise <b>•</b> 日出見 <b>•</b> 10.23.2026 <b>•</b> </span><span>see you at sunrise <b>•</b> 日出見 <b>•</b> 10.23.2026 <b>•</b> </span><span>see you at sunrise <b>•</b> 日出見 <b>•</b> 10.23.2026 <b>•</b> </span><span>see you at sunrise <b>•</b> 日出見 <b>•</b> 10.23.2026 <b>•</b> </span>
+  </div></div>
+
+  <!-- 03 · listening room -->
+  <section class="sec" id="listen">
+    <div class="wrap">
+      <div class="kicker reveal-el"><span class="rn">iii</span><span class="en">listening room</span><span class="zh">試聽室</span></div>
+      <h2 class="htitle">
+        <span class="en">hear it <span class="em">first.</span></span>
+        <span class="zh"><span class="em">先聽</span>為快。</span>
+      </h2>
+      <p class="muted reveal-el">
+        <span class="en">four demos, playing right here on the page. start with i envy you.</span>
+        <span class="zh">四首 demo，直接在這一頁播放。從 i envy you 開始聽。</span>
+      </p>
+      <div class="tracks" id="player">
+        <div class="track featured reveal-el" data-src="audio/i-envy-you.mp3" data-dur="179">
+          <button class="pbtn" type="button" aria-label="play or pause — i envy you"></button>
+          <div class="meta">
+            <div class="title">i envy you</div>
+            <div class="sub"><span class="en">focus track — start here</span><span class="zh">主打——從這首開始</span></div>
+            <div class="pbar"><span class="pline"><span class="pfill"></span></span></div>
+          </div>
+          <span class="ptime">2:59</span>
+        </div>
+        <div class="track reveal-el" style="--rd:.08s" data-src="audio/fly-high.mp3" data-dur="169">
+          <button class="pbtn" type="button" aria-label="play or pause — fly high"></button>
+          <div class="meta">
+            <div class="title">fly high</div>
+            <div class="pbar"><span class="pline"><span class="pfill"></span></span></div>
+          </div>
+          <span class="ptime">2:49</span>
+        </div>
+        <div class="track reveal-el" style="--rd:.16s" data-src="audio/my-version-of-you.m4a" data-dur="176">
+          <button class="pbtn" type="button" aria-label="play or pause — my version of you"></button>
+          <div class="meta">
+            <div class="title">my version of you</div>
+            <div class="pbar"><span class="pline"><span class="pfill"></span></span></div>
+          </div>
+          <span class="ptime">2:56</span>
+        </div>
+        <div class="track reveal-el" style="--rd:.24s" data-src="audio/bassline.m4a" data-dur="181">
+          <button class="pbtn" type="button" aria-label="play or pause — bassline"></button>
+          <div class="meta">
+            <div class="title">bassline</div>
+            <div class="pbar"><span class="pline"><span class="pfill"></span></span></div>
+          </div>
+          <span class="ptime">3:01</span>
+        </div>
+      </div>
+      <p class="lr-note reveal-el">
+        <span class="en">private demos, for your ears — please don't pass the files on.</span>
+        <span class="zh">私人 demo，給你聽的——請勿外傳。</span>
+      </p>
+      <figure class="photo reveal-el">
+        <img src="img/voice-portrait.jpg" alt="mosun close to the microphone, backstage red light" width="800" height="1200" loading="lazy" decoding="async">
+      </figure>
+    </div>
+  </section>
+
+  <!-- 04 · release plan -->
+  <section class="sec" id="plan">
+    <div class="wrap">
+      <div class="kicker reveal-el"><span class="rn">iv</span><span class="en">release plan</span><span class="zh">發行計畫</span></div>
+      <h2 class="htitle">
+        <span class="en">the road to <span class="em">october.</span></span>
+        <span class="zh">通往<span class="em">十月</span>的路。</span>
+      </h2>
+      <ul class="timeline">
+        <li class="reveal-el">
+          <div class="when"><span class="en">mid-august 2026</span><span class="zh">2026 年 8 月中</span></div>
+          <div class="what"><span class="en">single — 你不是我 ft. 孫盛希</span><span class="zh">單曲——你不是我 ft. 孫盛希</span></div>
+          <div class="why"><span class="en">the first door in. a duet with one of taiwan's most loved r&amp;b voices.</span><span class="zh">第一扇門。與台灣最受喜愛的 r&amp;b 女聲之一對唱。</span></div>
+        </li>
+        <li class="reveal-el" style="--rd:.1s">
+          <div class="when"><span class="en">late september 2026</span><span class="zh">2026 年 9 月底</span></div>
+          <div class="what"><span class="en">solo focus single</span><span class="zh">個人主打單曲</span></div>
+          <div class="why"><span class="en">mosun alone, center frame.</span><span class="zh">mosun 一個人，站在畫面中央。</span></div>
+        </li>
+        <li class="reveal-el" style="--rd:.2s">
+          <div class="when"><span class="en">october 23, 2026</span><span class="zh">2026 年 10 月 23 日</span></div>
+          <div class="what"><span class="en">album — see you at sunrise</span><span class="zh">專輯——《see you at sunrise》</span></div>
+          <div class="why"><span class="en">12 tracks. the whole night, start to dawn.</span><span class="zh">12 首歌。一整夜，走到天亮。</span></div>
+        </li>
+        <li class="reveal-el" style="--rd:.3s">
+          <div class="when"><span class="en">november – december 2026</span><span class="zh">2026 年 11–12 月</span></div>
+          <div class="what"><span class="en">live appearances</span><span class="zh">現場演出</span></div>
+          <div class="why"><span class="en">the songs meet the room.</span><span class="zh">讓歌走進現場。</span></div>
+        </li>
+      </ul>
+      <figure class="photo reveal-el">
+        <img src="img/single-portrait.jpg" alt="mosun portrait in deep red light" width="1000" height="1000" loading="lazy" decoding="async">
+      </figure>
+    </div>
+  </section>
+
+  <!-- 05 · the machine -->
+  <section class="sec" id="machine">
+    <div class="wrap">
+      <div class="kicker reveal-el"><span class="rn">v</span><span class="en">the machine</span><span class="zh">行銷系統</span></div>
+      <h2 class="htitle">
+        <span class="en">a system, already <span class="em">running.</span></span>
+        <span class="zh">系統，已經在<span class="em">跑</span>。</span>
+      </h2>
+      <p class="muted reveal-el">
+        <span class="en">high level on purpose — the tactics stay in-house.</span>
+        <span class="zh">這裡只講大方向——細節留在內部。</span>
+      </p>
+      <div class="machine">
+        <div class="cell mag reveal-el">
+          <h3><span class="en">content system</span><span class="zh">內容系統</span></h3>
+          <p><span class="en">a daily short-video point-of-view system on tiktok and instagram, built on the artist statement.</span><span class="zh">以藝人論述為核心的每日短影音系統——tiktok 與 instagram。</span></p>
+        </div>
+        <div class="cell mag reveal-el" style="--rd:.07s">
+          <h3><span class="en">fan engine</span><span class="zh">粉絲引擎</span></h3>
+          <p><span class="en">a first-listeners demo room and email list turn followers into superfans. the moonwalkers are already global — taiwan, philippines, malaysia, germany, poland, brazil, canada, uk, us.</span><span class="zh">「first listeners」試聽室加上 email 名單，把追蹤者養成鐵粉。moonwalkers 已遍布台灣、菲律賓、馬來西亞、德國、波蘭、巴西、加拿大、英國、美國。</span></p>
+        </div>
+        <div class="cell mag reveal-el" style="--rd:.14s">
+          <h3><span class="en">paid</span><span class="zh">廣告投放</span></h3>
+          <p><span class="en">meta ads for reach.</span><span class="zh">meta 廣告負責觸及。</span></p>
+        </div>
+        <div class="cell mag reveal-el" style="--rd:.21s">
+          <h3><span class="en">press</span><span class="zh">媒體</span></h3>
+          <p><span class="en">press and editorial pushes around every single.</span><span class="zh">每一波單曲，都配合媒體與歌單編輯推進。</span></p>
+        </div>
+      </div>
+      <figure class="photo reveal-el">
+        <img src="img/stage-letters.jpg" alt="mosun across the stage wall, mid-set" width="1600" height="1067" loading="lazy" decoding="async">
+        <figcaption class="cap">
+          <span class="en">the name, up in lights</span>
+          <span class="zh">名字，打在燈上</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 06 · live -->
+  <section class="sec" id="live">
+    <div class="wrap">
+      <div class="kicker reveal-el"><span class="rn">vi</span><span class="en">live</span><span class="zh">現場</span></div>
+      <h2 class="htitle">
+        <span class="en">on the <span class="em">road,</span> july to december.</span>
+        <span class="zh">七月到十二月，都在<span class="em">路上</span>。</span>
+      </h2>
+      <p class="muted reveal-el">
+        <span class="en">guest artist on 孫盛希 shi shi's tour.</span>
+        <span class="zh">孫盛希巡迴演唱會嘉賓。</span>
+      </p>
+      <ul class="dates reveal-el">
+        <li><span><span class="en">guangzhou</span><span class="zh">廣州</span></span><span class="when"><span class="en">july 24</span><span class="zh">7 月 24 日</span></span></li>
+        <li><span><span class="en">shenzhen</span><span class="zh">深圳</span></span><span class="when"><span class="en">july 26</span><span class="zh">7 月 26 日</span></span></li>
+        <li><span><span class="en">wuhan</span><span class="zh">武漢</span></span><span class="when"><span class="en">august 13</span><span class="zh">8 月 13 日</span></span></li>
+        <li><span><span class="en">hangzhou</span><span class="zh">杭州</span></span><span class="when"><span class="en">august 16</span><span class="zh">8 月 16 日</span></span></li>
+        <li><span><span class="en">shanghai</span><span class="zh">上海</span></span><span class="when"><span class="en">september 12</span><span class="zh">9 月 12 日</span></span></li>
+        <li><span><span class="en">seoul</span><span class="zh">首爾</span></span><span class="when tba"><span class="en">tba</span><span class="zh">日期待定</span></span></li>
+        <li><span><span class="en">taipei · legacy tera</span><span class="zh">台北 · legacy tera</span></span><span class="when tba"><span class="en">tba</span><span class="zh">日期待定</span></span></li>
+        <li><span><span class="en">kuala lumpur · zepp</span><span class="zh">吉隆坡 · zepp</span></span><span class="when tba"><span class="en">tba</span><span class="zh">日期待定</span></span></li>
+      </ul>
+      <p style="margin-top:28px" class="muted reveal-el">
+        <span class="en">first mosun headline shows in planning — taipei and los angeles.</span>
+        <span class="zh">mosun 首次專場籌備中——台北、洛杉磯。</span>
+      </p>
+      <figure class="photo reveal-el">
+        <img src="img/leather-mic.jpg" alt="mosun singing close to the microphone in black leather" width="800" height="1200" loading="lazy" decoding="async">
+      </figure>
+    </div>
+  </section>
+
+  <!-- 07 · contact -->
+  <section class="sec" id="contact">
+    <div class="wrap">
+      <div class="kicker reveal-el"><span class="rn">vii</span><span class="en">contact</span><span class="zh">聯絡</span></div>
+      <h2 class="htitle">
+        <span class="en">the <span class="em">sun's</span> almost up.</span>
+        <span class="zh">天快<span class="em">亮</span>了。</span>
+      </h2>
+      <p class="reveal-el">
+        <span class="en">if any of this speaks to you, i'd love to talk.</span>
+        <span class="zh">如果這些有打動你，我很樂意聊聊。</span>
+      </p>
+      <div class="contact-ctas reveal-el" style="--rd:.1s">
+        <a class="btn primary mag" href="mailto:i@mosun.cool">i@mosun.cool</a>
+        <a class="btn mag" href="https://instagram.com/morrisonma" target="_blank" rel="noopener noreferrer">instagram · @morrisonma</a>
+      </div>
+      <div class="signoff reveal-el" style="--rd:.2s">
+        <span class="en">see you at sunrise.</span>
+        <span class="zh">日出見。</span>
+      </div>
+      <p class="privnote reveal-el" style="--rd:.3s">
+        <span class="en">private page — please don't forward the link. no analytics, no tracking.</span>
+        <span class="zh">私人頁面——請勿轉發連結。無流量分析、無追蹤。</span>
+        <br>© 2026 mosun · gen s records · taipei
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span class="en">private page — please don't forward the link. no analytics, no tracking.</span>
+  <span class="zh">私人頁面——請勿轉發連結。無流量分析、無追蹤。</span>
+  <br>© 2026 mosun · gen s records · taipei
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  var htmlEl = document.documentElement;
+  var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var finePointer = window.matchMedia && window.matchMedia('(pointer:fine)').matches;
+  var hidden = false;
+  document.addEventListener('visibilitychange', function(){ hidden = document.hidden; });
+
+  /* ---------- language ---------- */
+  var langBtns = document.querySelectorAll('[data-setlang]');
+  function setLang(lang){
+    htmlEl.setAttribute('data-lang', lang);
+    htmlEl.setAttribute('lang', lang === 'zh' ? 'zh-Hant' : 'en');
+    langBtns.forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-setlang') === lang)); });
+    try{ sessionStorage.setItem('sys_lang', lang); }catch(e){}
+    updateMute();
+  }
+  langBtns.forEach(function(b){
+    b.addEventListener('click', function(e){ setLang(b.getAttribute('data-setlang')); juice(e, 587); });
+  });
+
+  /* ---------- sound + haptics ---------- */
+  var soundOn = true;
+  try{ soundOn = localStorage.getItem('sys_sound') !== 'off'; }catch(e){}
+  var actx = null;
+  function tick(freq){
+    if(!soundOn) return;
+    try{
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if(actx.state === 'suspended') actx.resume();
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = 'sine'; o.frequency.value = freq || 523;
+      g.gain.setValueAtTime(0.0001, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.05, actx.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + 0.18);
+      o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + 0.2);
+    }catch(e){}
+  }
+  function buzz(ms){ if(soundOn && navigator.vibrate) try{ navigator.vibrate(ms || 12); }catch(e){} }
+  function updateMute(){
+    var zh = htmlEl.getAttribute('data-lang') === 'zh';
+    $('muteBtn').textContent = zh ? (soundOn ? '聲音 開' : '聲音 關') : (soundOn ? 'sound on' : 'sound off');
+  }
+  $('muteBtn').addEventListener('click', function(){
+    soundOn = !soundOn;
+    try{ localStorage.setItem('sys_sound', soundOn ? 'on' : 'off'); }catch(e){}
+    updateMute(); if(soundOn) tick(523);
+  });
+
+  /* ---------- juice ---------- */
+  function ripple(x, y){
+    if(prefersReduced) return;
+    var r = document.createElement('div'); r.className = 'ripple';
+    r.style.left = x + 'px'; r.style.top = y + 'px';
+    document.body.appendChild(r); setTimeout(function(){ r.remove(); }, 640);
+  }
+  function juice(e, freq){
+    var x, y;
+    if(e && e.clientX != null && (e.clientX || e.clientY)){ x = e.clientX; y = e.clientY; }
+    else if(e && e.currentTarget && e.currentTarget.getBoundingClientRect){
+      var rc = e.currentTarget.getBoundingClientRect(); x = rc.left + rc.width/2; y = rc.top + rc.height/2;
+    }
+    if(x != null) ripple(x, y);
+    tick(freq); buzz(12);
+  }
+
+  try{
+    var savedLang = sessionStorage.getItem('sys_lang');
+    if(savedLang === 'zh' || savedLang === 'en') setLang(savedLang);
+    else updateMute();
+  }catch(e){ updateMute(); }
+
+  /* ---------- pointer state ---------- */
+  var pointer = { x:-9999, y:-9999, active:false };
+  addEventListener('pointermove', function(e){ pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true; }, { passive:true });
+  addEventListener('pointerdown', function(e){ pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true; }, { passive:true });
+  window.addEventListener('blur', function(){ pointer.active = false; });
+
+  /* ==================================================================
+     THE SUN — ink-bloom shader, ported from the bloom listening room.
+     u_rise (0..1) lifts the core from below the horizon and brightens
+     the whole sky: night at the first card, sunrise at the last.
+     ================================================================== */
+  function initInkBloom(canvas, options){
+    options = options || {};
+    var opts = {
+      intensity: options.intensity != null ? options.intensity : 1.0,
+      violet: options.violet != null ? options.violet : 0.18,
+      speed: options.speed != null ? options.speed : 1.0,
+      maxResolution: options.maxResolution || 1280,
+      fps: options.fps || 30,
+      renderScale: options.renderScale || 0.65,
+      still: !!options.still
+    };
+    if(prefersReduced) opts.still = true;
+
+    var gl = null;
+    try{
+      gl = canvas.getContext('webgl', { antialias:false, alpha:false, depth:false, stencil:false, preserveDrawingBuffer:false, powerPreference:'low-power' })
+        || canvas.getContext('experimental-webgl');
+    }catch(e){ gl = null; }
+    function noop(){}
+    function cssHandle(){ canvas.style.display = 'none'; return { mode:'css', setRise:noop, pause:noop, resume:noop, destroy:noop }; }
+    if(!gl) return cssHandle();
+
+    var VERT = 'attribute vec2 a_pos; void main(){ gl_Position = vec4(a_pos, 0.0, 1.0); }';
+    var FRAG = [
+      '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+      'precision highp float;',
+      '#else',
+      'precision mediump float;',
+      '#endif',
+      'uniform vec2 u_res; uniform float u_time; uniform float u_intensity; uniform float u_violet; uniform float u_rise;',
+      'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453123); }',
+      'float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p);',
+      '  float a=hash(i), b=hash(i+vec2(1.,0.)), c=hash(i+vec2(0.,1.)), d=hash(i+vec2(1.,1.));',
+      '  vec2 u=f*f*(3.-2.*f); return mix(mix(a,b,u.x), mix(c,d,u.x), u.y); }',
+      'float fbm(vec2 p){ float v=0., a=0.5; mat2 m=mat2(1.6,1.2,-1.2,1.6);',
+      '  for(int i=0;i<5;i++){ v+=a*vnoise(p); p=m*p; a*=0.5; } return v; }',
+      'void main(){',
+      '  vec2 uv=(gl_FragCoord.xy-0.5*u_res)/u_res.y;',
+      '  float t=u_time;',
+      '  vec2 ctr=vec2(sin(t*0.05)*0.05, cos(t*0.043)*0.045 + mix(-0.72, -0.18, u_rise));',
+      '  vec2 p=uv-ctr;',
+      '  vec2 q=vec2(fbm(p*1.6 + t*0.03), fbm(p*1.6 + vec2(5.2,1.3) - t*0.025));',
+      '  vec2 r=vec2(fbm(p*1.6 + 1.2*q + vec2(1.7,9.2) + t*0.02), fbm(p*1.6 + 1.2*q + vec2(8.3,2.8) - t*0.018));',
+      '  float f=fbm(p*1.6 + 1.6*r);',
+      '  float rad=length(p);',
+      '  float d=rad*(0.82+0.55*f) - 0.10*r.x;',
+      '  vec3 hot=vec3(1.000,0.965,0.910);',
+      '  vec3 saff=vec3(0.965,0.635,0.360);',
+      '  vec3 amber=vec3(0.847,0.510,0.227);',
+      '  vec3 oxb=vec3(0.353,0.180,0.063);',   // burnt amber, not oxblood — red stays reserved for the stage
+      '  vec3 viol=vec3(0.196,0.102,0.157);',
+      '  vec3 ink=vec3(0.0);',
+      '  vec3 col=hot;',
+      '  col=mix(col, saff,  smoothstep(0.02,0.16,d));',
+      '  col=mix(col, amber, smoothstep(0.12,0.30,d));',
+      '  col=mix(col, oxb,   smoothstep(0.26,0.52,d));',
+      '  vec3 outer=mix(oxb, viol, clamp(u_violet,0.0,1.0));',
+      '  col=mix(col, outer, smoothstep(0.46,0.72,d)*0.85);',
+      '  col=mix(col, ink,   smoothstep(0.64,1.05,d));',
+      '  float ridge=1.0-abs(fbm(p*5.5 + r*2.4 + t*0.04)*2.0-1.0);',
+      '  ridge=pow(clamp(ridge,0.0,1.0), 3.5);',
+      '  float filMask=smoothstep(0.05,0.22,rad)*(1.0-smoothstep(0.42,0.85,rad));',
+      '  col+=saff*ridge*filMask*0.35;',
+      '  float waves=0.5+0.5*sin(rad*34.0 - t*0.45 + f*4.0);',
+      '  col+=saff*waves*(1.0-smoothstep(0.12,0.5,rad))*0.05;',
+      '  float core=exp(-rad*rad*14.0);',
+      '  float halo=exp(-rad*2.6);',
+      '  col+=(hot*core*1.5 + saff*halo*0.5)*mix(0.55, 1.15, u_rise);',
+      '  col*=u_intensity*mix(0.40, 1.22, u_rise);',
+      '  col*=(1.0-smoothstep(0.12+0.40*u_rise, 0.62+1.10*u_rise, rad));',
+      '  col+=(saff*0.085+hot*0.030)*u_rise*smoothstep(0.60,-0.50,uv.y);',
+      '  col.g=min(col.g, col.r*0.85+0.08);',   // keep the additive highlights warm, never green
+      '  float g=hash(gl_FragCoord.xy*0.7 + fract(t)*vec2(13.1,7.7));',
+      '  col+=(g-0.5)*0.05;',
+      '  gl_FragColor=vec4(max(col,0.0),1.0);',
+      '}'
+    ].join('\n');
+
+    function sh(type, src){
+      var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+      if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){ gl.deleteShader(s); return null; }
+      return s;
+    }
+    var vs = sh(gl.VERTEX_SHADER, VERT), fs = sh(gl.FRAGMENT_SHADER, FRAG);
+    if(!vs || !fs) return cssHandle();
+    var prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+    if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) return cssHandle();
+    gl.useProgram(prog);
+
+    var quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    var aPos = gl.getAttribLocation(prog, 'a_pos'); gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    var uRes = gl.getUniformLocation(prog, 'u_res'), uTime = gl.getUniformLocation(prog, 'u_time'),
+        uInt = gl.getUniformLocation(prog, 'u_intensity'), uVio = gl.getUniformLocation(prog, 'u_violet'),
+        uRise = gl.getUniformLocation(prog, 'u_rise');
+    gl.uniform1f(uInt, opts.intensity); gl.uniform1f(uVio, opts.violet); gl.uniform1f(uRise, 0);
+
+    function resize(){
+      var rect = canvas.getBoundingClientRect();
+      var cssW = Math.max(1, rect.width), cssH = Math.max(1, rect.height);
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var w = cssW * dpr * opts.renderScale, h = cssH * dpr * opts.renderScale;
+      var le = Math.max(w, h); if(le > opts.maxResolution){ var k = opts.maxResolution/le; w *= k; h *= k; }
+      w = Math.max(2, Math.floor(w)); h = Math.max(2, Math.floor(h));
+      if(canvas.width !== w || canvas.height !== h){ canvas.width = w; canvas.height = h; }
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+    }
+
+    var raf = 0, last = -1e9, t0 = null, interval = 1000/opts.fps;
+    var visible = true, onscreen = true, manualPause = false, destroyed = false, stillQueued = false;
+    function draw(ts){ if(t0 === null) t0 = ts; gl.uniform1f(uTime, ((ts-t0)/1000)*opts.speed); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+    function renderStill(){ gl.uniform1f(uTime, 6.0*opts.speed); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+    function loop(ts){ if(destroyed) return; raf = requestAnimationFrame(loop); if(ts-last < interval) return; last = ts; draw(ts); }
+    function start(){ if(destroyed || opts.still) return; if(!raf){ last = -1e9; raf = requestAnimationFrame(loop); } }
+    function stop(){ if(raf){ cancelAnimationFrame(raf); raf = 0; } }
+    function sync(){ if(visible && onscreen && !manualPause) start(); else stop(); }
+
+    function onVis(){ visible = !document.hidden; sync(); }
+    function onLost(e){ e.preventDefault(); stop(); canvas.style.display = 'none'; }
+    document.addEventListener('visibilitychange', onVis);
+    canvas.addEventListener('webglcontextlost', onLost, false);
+    if('ResizeObserver' in window){ var ro = new ResizeObserver(function(){ resize(); if(opts.still) renderStill(); }); ro.observe(canvas); }
+    else addEventListener('resize', function(){ resize(); if(opts.still) renderStill(); });
+
+    resize();
+    if(opts.still) renderStill(); else sync();
+
+    return {
+      mode: opts.still ? 'still' : 'webgl',
+      setRise: function(p){
+        if(destroyed) return;
+        gl.uniform1f(uRise, p);
+        gl.uniform1f(uVio, opts.violet*(1 - p*0.55));
+        if(opts.still && !stillQueued){ stillQueued = true; requestAnimationFrame(function(){ stillQueued = false; renderStill(); }); }
+      },
+      pause: function(){ manualPause = true; sync(); },
+      resume: function(){ manualPause = false; sync(); }
+    };
+  }
+  var bloomHandle = null;
+  function startBloom(){
+    var wrap = $('bloomwrap'); if(!wrap || bloomHandle) return;
+    bloomHandle = initInkBloom($('bloom'), { violet:0.12, intensity:1.0, speed:1.0 });
+    wrap.classList.add('on');
+    if(bloomHandle.mode !== 'css') wrap.classList.add('live');
+  }
+
+  /* ---------- warm sand particles ---------- */
+  function startParticles(){
+    if(prefersReduced) return;
+    var c = $('particles'), ctx = c.getContext('2d');
+    function size(){ c.width = innerWidth; c.height = innerHeight; } size(); addEventListener('resize', size);
+    var parts = [], n = Math.min(162, Math.round(innerWidth/5));
+    for(var i = 0; i < n; i++){
+      var bv = 0.12 + Math.random()*0.45;
+      parts.push({ x:Math.random()*innerWidth, y:Math.random()*innerHeight, r:0.6+Math.random()*1.9, bvx:bv, vx:bv, vy:0, a:0.06+Math.random()*0.22, d:Math.random()*Math.PI*2 });
+    }
+    c.classList.add('on');
+    (function frame(){
+      if(!hidden){
+        ctx.clearRect(0,0,c.width,c.height);
+        for(var i = 0; i < parts.length; i++){
+          var p = parts[i];
+          if(pointer.active){
+            var dx = p.x-pointer.x, dy = p.y-pointer.y, R = 130, d2 = dx*dx+dy*dy;
+            if(d2 < R*R){ var d = Math.sqrt(d2)||1, fr = (1-d/R)*2.8; p.vx += dx/d*fr; p.vy += dy/d*fr; }
+          }
+          p.vx += (p.bvx-p.vx)*0.05; p.vy += (0-p.vy)*0.05;
+          p.d += 0.01; p.x += p.vx; p.y += p.vy + Math.sin(p.d)*0.12;
+          if(p.x > c.width+6){ p.x = -6; p.y = Math.random()*c.height; } else if(p.x < -30){ p.x = c.width+10; }
+          if(p.y < -30){ p.y = c.height+10; } else if(p.y > c.height+30){ p.y = -10; }
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle = 'rgba(246,162,92,'+p.a+')'; ctx.fill();
+        }
+      }
+      requestAnimationFrame(frame);
+    })();
+  }
+
+  /* ---------- the sun + night clock (p = journey progress in either view) ---------- */
+  var sunriseFired = false;
+  var lastRise = -1;
+  function setSun(p){
+    p = Math.min(1, Math.max(0, p));
+    if(Math.abs(p - lastRise) > 0.0015){
+      lastRise = p;
+      if(bloomHandle) bloomHandle.setRise(p);
+      htmlEl.style.setProperty('--rise', p.toFixed(3));
+    }
+    var mins = 180 + Math.round(p*210); // 03:00 -> 06:30
+    var hh = Math.floor(mins/60), mm = mins % 60;
+    var clock = $('nightclock');
+    if(p >= 0.965){
+      if(clock.textContent !== '06:30 · sunrise · 日出'){ clock.textContent = '06:30 · sunrise · 日出'; clock.classList.add('up'); }
+      if(!sunriseFired){ sunriseFired = true; if(!prefersReduced) $('sunrise').classList.add('on'); tick(784); buzz([12,40,18]); }
+    }else{
+      clock.classList.remove('up');
+      clock.textContent = (hh < 10 ? '0'+hh : hh) + ':' + (mm < 10 ? '0'+mm : mm);
+      if(sunriseFired){ sunriseFired = false; $('sunrise').classList.remove('on'); }
+    }
+  }
+  function scrollProgress(){ var h = document.documentElement.scrollHeight - innerHeight; return h > 0 ? Math.min(1, Math.max(0, scrollY/h)) : 0; }
+  var sunTick = false;
+  addEventListener('scroll', function(){
+    if(htmlEl.getAttribute('data-view') !== 'list' || document.body.classList.contains('panel-open')) return;
+    if(sunTick) return; sunTick = true;
+    requestAnimationFrame(function(){ setSun(scrollProgress()); sunTick = false; });
+  }, { passive:true });
+
+  /* ---------- scatter titles ---------- */
+  function splitTitles(){
+    if(prefersReduced) return;
+    document.querySelectorAll('.htitle').forEach(function(h){
+      ['.en','.zh'].forEach(function(sel){
+        var span = h.querySelector(sel); if(!span) return;
+        var groupWords = sel === '.en';
+        var idx = 0;
+        function charSpan(ch){
+          var s = document.createElement('span'); s.className = 'char'; s.textContent = ch;
+          s.style.setProperty('--d', (idx*0.022) + 's');
+          s.style.setProperty('--r', ((Math.random()*28) - 14).toFixed(1) + 'deg');
+          idx++; return s;
+        }
+        function wrap(node){
+          if(node.nodeType === 3){
+            var frag = document.createDocumentFragment();
+            node.nodeValue.split(/(\s+)/).forEach(function(tok){
+              if(!tok) return;
+              if(/^\s+$/.test(tok)){ frag.appendChild(document.createTextNode(' ')); return; }
+              if(groupWords){
+                var w = document.createElement('span'); w.className = 'word';
+                tok.split('').forEach(function(ch){ w.appendChild(charSpan(ch)); });
+                frag.appendChild(w);
+              }else{
+                tok.split('').forEach(function(ch){ frag.appendChild(charSpan(ch)); });
+              }
+            });
+            node.parentNode.replaceChild(frag, node);
+          }else if(node.nodeType === 1){
+            Array.prototype.slice.call(node.childNodes).forEach(wrap);
+          }
+        }
+        wrap(span);
+        span.classList.add('split');
+      });
+    });
+  }
+
+  /* ---------- reveals (list view + panels) ---------- */
+  function initReveals(){
+    var secs = document.querySelectorAll('.sec');
+    if(!('IntersectionObserver' in window) || prefersReduced){
+      secs.forEach(function(s){ s.classList.add('on'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add('on'); io.unobserve(en.target); }
+      });
+    }, { threshold:0.18, rootMargin:'0px 0px -6% 0px' });
+    secs.forEach(function(s){ io.observe(s); });
+  }
+
+  /* ---------- cursor + magnetic + trail ---------- */
+  var cursor = $('cursor');
+  function initCursor(){
+    if(!finePointer || prefersReduced) return;
+    var cx = -100, cy = -100, tx = -100, ty = -100, shown = false;
+    addEventListener('mousemove', function(e){
+      tx = e.clientX; ty = e.clientY;
+      if(!shown){ shown = true; cursor.classList.add('show'); cx = tx; cy = ty; }
+    });
+    (function follow(){
+      cx += (tx-cx)*0.22; cy += (ty-cy)*0.22;
+      cursor.style.left = cx + 'px'; cursor.style.top = cy + 'px';
+      requestAnimationFrame(follow);
+    })();
+  }
+  function initMagnetic(){
+    if(!finePointer || prefersReduced) return;
+    document.querySelectorAll('.mag').forEach(function(el){
+      el.addEventListener('mousemove', function(e){
+        var r = el.getBoundingClientRect();
+        var dx = e.clientX - (r.left + r.width/2); var dy = e.clientY - (r.top + r.height/2);
+        el.style.transform = 'translate(' + dx*0.18 + 'px,' + dy*0.18 + 'px)';
+      });
+      el.addEventListener('mouseleave', function(){ el.style.transform = ''; });
+    });
+    document.querySelectorAll('.mag, .btn, .go, .iconbtn, .lang-toggle button, a, .card3d, #caption').forEach(function(el){
+      el.addEventListener('mouseenter', function(){ cursor.classList.add('grow'); });
+      el.addEventListener('mouseleave', function(){ cursor.classList.remove('grow'); });
+    });
+  }
+  function initTrail(){
+    if(!finePointer || prefersReduced) return;
+    var c = $('trail'); if(!c) return; var x = c.getContext('2d');
+    function size(){ c.width = innerWidth; c.height = innerHeight; } size(); addEventListener('resize', size);
+    var trail = [], LIFE = 1.2, lx = -9999, ly = -9999;
+    var SUBS = [
+      { off:-8,  wob:5,  ph:0.4, a:0.34 }, { off:8,  wob:6,  ph:1.9, a:0.32 },
+      { off:-17, wob:9,  ph:3.4, a:0.20 }, { off:17, wob:8,  ph:5.0, a:0.18 },
+      { off:-28, wob:13, ph:2.4, a:0.10 }, { off:28, wob:12, ph:4.3, a:0.09 }
+    ];
+    var MAINP = [ { col:'246,162,92', w:8, a:0.16 }, { col:'246,162,92', w:4.5, a:0.46 }, { col:'255,233,201', w:2.4, a:0.98 } ];
+    function seg(px, py, i, j){
+      x.beginPath();
+      x.moveTo((px[i-1]+px[i])/2, (py[i-1]+py[i])/2);
+      x.quadraticCurveTo(px[i], py[i], (px[i]+px[j])/2, (py[i]+py[j])/2);
+      x.stroke();
+    }
+    function frame(ts){
+      var t = ts/1000;
+      if(!hidden){
+        if(pointer.active && pointer.x > -9000){
+          var mdx = pointer.x-lx, mdy = pointer.y-ly;
+          if(mdx*mdx + mdy*mdy > 2){ trail.push({ x:pointer.x, y:pointer.y, t:t }); lx = pointer.x; ly = pointer.y; }
+        }
+        while(trail.length && t - trail[0].t > LIFE) trail.shift();
+        if(trail.length > 170) trail.splice(0, trail.length-170);
+        x.clearRect(0,0,c.width,c.height);
+        x.globalCompositeOperation = 'lighter'; x.lineCap = 'round'; x.lineJoin = 'round';
+        var n = trail.length;
+        if(n > 2){
+          var nx = [], ny = [];
+          for(var i = 0; i < n; i++){
+            var a = trail[i > 0 ? i-1 : 0], b = trail[i < n-1 ? i+1 : n-1];
+            var dx = b.x-a.x, dy = b.y-a.y, l = Math.sqrt(dx*dx+dy*dy)||1;
+            nx[i] = -dy/l; ny[i] = dx/l;
+          }
+          x.strokeStyle = 'rgba(246,162,92,1)';
+          for(var si = 0; si < SUBS.length; si++){
+            var sb = SUBS[si], px = [], py = [];
+            for(var i = 0; i < n; i++){
+              var f = i/n, o = (sb.off + sb.wob*Math.sin(i*0.16 + sb.ph)) * (0.3 + 0.8*f);
+              px[i] = trail[i].x + nx[i]*o; py[i] = trail[i].y + ny[i]*o;
+            }
+            for(var pass = 0; pass < 2; pass++){
+              var pw = pass === 0 ? 9 : 19, pa = pass === 0 ? 0.5 : 0.26;
+              for(var i = 1; i < n; i++){
+                var f = i/n, bright = f * (1 - (t-trail[i].t)/LIFE); if(bright <= 0) continue;
+                x.globalAlpha = sb.a*pa*bright; x.lineWidth = pw*(0.5 + 0.7*f);
+                seg(px, py, i, i < n-1 ? i+1 : i);
+              }
+            }
+          }
+          var mx = [], my = [];
+          for(var i = 0; i < n; i++){ mx[i] = trail[i].x; my[i] = trail[i].y; }
+          for(var pass = 0; pass < MAINP.length; pass++){
+            var ps = MAINP[pass]; x.strokeStyle = 'rgba(' + ps.col + ',1)';
+            for(var i = 1; i < n; i++){
+              var f = i/n, bright = f * (1 - (t-trail[i].t)/LIFE); if(bright <= 0) continue;
+              x.globalAlpha = ps.a*bright; x.lineWidth = ps.w*(0.5 + 0.7*f);
+              seg(mx, my, i, i < n-1 ? i+1 : i);
+            }
+          }
+        }
+        if(pointer.active && pointer.x > -9000){
+          var g = x.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, 20);
+          g.addColorStop(0,'rgba(255,236,206,0.9)'); g.addColorStop(0.32,'rgba(246,162,92,0.5)'); g.addColorStop(1,'rgba(246,162,92,0)');
+          x.globalAlpha = 1; x.fillStyle = g; x.beginPath(); x.arc(pointer.x, pointer.y, 20, 0, Math.PI*2); x.fill();
+        }
+        x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ==================================================================
+     THE DECK — a spiral of cards in the night, driven by virtual scroll
+     ================================================================== */
+  var CARDS = [
+    { id:'hero',    rn:'m',   face:'cover' },
+    { id:'who',     rn:'i',   face:'img/night-silhouette.jpg',
+      t:{ en:'who is mosun', zh:'關於 mosun' }, s:{ en:'ten years behind the glass', zh:'十年，站在玻璃後面' } },
+    { id:'album',   rn:'ii',  face:'img/sun-sq.jpg',
+      t:{ en:'see you at sunrise', zh:'see you at sunrise' }, s:{ en:'12 tracks · october 23, 2026', zh:'12 首歌 · 2026 年 10 月 23 日' } },
+    { id:'listen',  rn:'iii', face:'img/leather-mic.jpg',
+      t:{ en:'listening room', zh:'試聽室' }, s:{ en:'four demos — press play', zh:'四首 demo——按下播放' } },
+    { id:'plan',    rn:'iv',  face:'img/sky-mic.jpg',
+      t:{ en:'release plan', zh:'發行計畫' }, s:{ en:'the road to october', zh:'通往十月的路' } },
+    { id:'machine', rn:'v',   face:'img/crowd-sq.jpg',
+      t:{ en:'the machine', zh:'行銷系統' }, s:{ en:'a system, already running', zh:'系統，已經在跑' } },
+    { id:'live',    rn:'vi',  face:'img/live-amber.jpg',
+      t:{ en:'live', zh:'現場' }, s:{ en:'on the road, july to december', zh:'七月到十二月都在路上' } },
+    { id:'contact', rn:'vii', face:'img/grammy-sq.jpg',
+      t:{ en:'contact', zh:'聯絡' }, s:{ en:"the sun's almost up", zh:'天快亮了' } }
+  ];
+  var N = CARDS.length;
+  var deck = $('deck');
+  var deckEls = [];
+  var vPos = 0, vTarget = 0, vVel = 0, lastFocus = -1;
+  var deckRunning = false;
+
+  function buildDeck(){
+    CARDS.forEach(function(c, i){
+      var el = document.createElement('button');
+      el.type = 'button'; el.className = 'card3d';
+      el.setAttribute('data-i', i);
+      el.setAttribute('aria-label', c.face === 'cover' ? 'mosun' : (c.t.en + ' — open'));
+      var inner = '';
+      if(c.face === 'cover'){
+        inner = '<div class="face"><img class="biglogo" src="img/logo.svg" alt=""><div class="wordline">mosun</div>' +
+          '<div class="s"><span class="en">a private introduction</span><span class="zh">私人介紹</span></div>' +
+          '<div class="cue"><span><span class="en">scroll toward sunrise</span><span class="zh">往日出捲動</span></span><span class="arr">↓</span></div></div>';
+      }else if(c.face === 'type'){
+        inner = '<div class="face"><div class="rn" style="font-size:64px">' + c.rn + '</div>' +
+          '<div class="t"><span class="en">' + c.t.en + '</span><span class="zh">' + c.t.zh + '</span></div>' +
+          '<div class="s"><span class="en">' + c.s.en + '</span><span class="zh">' + c.s.zh + '</span></div></div>';
+      }else{
+        inner = '<div class="ph" style="background-image:url(' + c.face + ')"></div><div class="veil"></div>' +
+          '<div class="face"><div class="rn">' + c.rn + '</div>' +
+          '<div class="t"><span class="en">' + c.t.en + '</span><span class="zh">' + c.t.zh + '</span></div>' +
+          '<div class="s"><span class="en">' + c.s.en + '</span><span class="zh">' + c.s.zh + '</span></div></div>';
+      }
+      el.innerHTML = inner;
+      /* the circles themselves are not clickable — panels open via the caption
+         button at the bottom (or enter); the deck surface is for scroll/drag only */
+      deck.appendChild(el);
+      deckEls.push(el);
+    });
+  }
+
+  function layoutDeck(){
+    var isMobile = innerWidth < 700;
+    var RX = isMobile ? innerWidth*0.46 : Math.min(innerWidth*0.34, 470);
+    var RZ = isMobile ? 420 : 560;
+    var vel = Math.min(14, Math.abs(vVel)*46);
+    for(var i = 0; i < N; i++){
+      var d = i - vPos;
+      var a = d * 0.85;
+      var x = Math.sin(a) * RX;
+      var z = (Math.cos(a) - 1) * RZ - Math.abs(d)*60;
+      var y = d * (isMobile ? -30 : -44);
+      var rY = Math.sin(a) * -24;
+      var ad = Math.abs(d);
+      var el = deckEls[i];
+      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' + rY + 'deg)';
+      var blur = Math.min(9, ad*2.6 + (ad > 0.35 ? vel : vel*0.4));
+      el.style.filter = 'blur(' + blur.toFixed(2) + 'px)';
+      el.style.opacity = String(Math.max(0, 1 - ad*0.26));
+      el.style.zIndex = String(100 - Math.round(ad*10));
+      el.style.visibility = ad > 3.6 ? 'hidden' : 'visible';
+      if(ad < 0.35){ el.classList.add('focus'); } else { el.classList.remove('focus'); }
+    }
+  }
+
+  /* idle hint — after 3 seconds with no input, quietly say what to do next */
+  var idleT = 0;
+  function guideShowing(){
+    var g = $('guide');
+    return !!(g && g.classList.contains('show') && !g.classList.contains('gone'));
+  }
+  function hintEligible(){
+    return ambienceOn
+      && htmlEl.getAttribute('data-view') === 'spiral'
+      && !document.body.classList.contains('panel-open')
+      && !guideShowing();
+  }
+  var panelHinted = false; /* the panel hint shows once per opened panel, so it never nags while reading */
+  function showIdleHint(){
+    var oh = $('openhint'); if(!oh) return;
+    if(document.body.classList.contains('panel-open')){
+      if(panelHinted || !ambienceOn) return;
+      panelHinted = true;
+      oh.setAttribute('data-k', 'panel');
+      oh.classList.add('show');
+      return;
+    }
+    if(!hintEligible()) return;
+    var f = Math.max(0, Math.min(N-1, Math.round(vPos)));
+    oh.setAttribute('data-k', CARDS[f].id === 'hero' ? 'scroll' : 'open');
+    oh.classList.add('show');
+  }
+  function armIdle(){
+    clearTimeout(idleT);
+    var oh = $('openhint'); if(oh) oh.classList.remove('show');
+    var want = document.body.classList.contains('panel-open')
+      ? (ambienceOn && !panelHinted)
+      : hintEligible();
+    if(!want) return;
+    idleT = setTimeout(showIdleHint, 3000);
+  }
+  /* any mouse movement, touch, scroll, click, or key press counts as activity */
+  ['pointermove','wheel','pointerdown','keydown','touchmove'].forEach(function(ev){
+    addEventListener(ev, armIdle, { passive:true });
+  });
+
+  function updateCaption(){
+    var f = Math.max(0, Math.min(N-1, Math.round(vPos)));
+    if(f === lastFocus) return;
+    lastFocus = f;
+    var c = CARDS[f];
+    $('cap-rn').textContent = c.face === 'cover' ? 'm' : c.rn;
+    $('cap-t').innerHTML = c.face === 'cover'
+      ? '<span class="en">mosun — a private introduction</span><span class="zh">mosun——私人介紹</span>'
+      : '<span class="en">' + c.t.en + '</span><span class="zh">' + c.t.zh + '</span>';
+    armIdle();
+    tick(440 + f*28); buzz(8);
+  }
+
+  function deckLoop(){
+    if(!deckRunning) return;
+    if(!hidden && htmlEl.getAttribute('data-view') === 'spiral' && !document.body.classList.contains('panel-open')){
+      var diff = vTarget - vPos;
+      vVel = vVel*0.82 + diff*0.055;
+      vPos += vVel;
+      if(Math.abs(diff) < 0.001 && Math.abs(vVel) < 0.001){ vPos = vTarget; vVel = 0; }
+      layoutDeck();
+      updateCaption();
+      setSun(vPos / (N-1));
+    }
+    requestAnimationFrame(deckLoop);
+  }
+
+  function bindDeckInput(){
+    var wheelAcc = 0;
+    addEventListener('wheel', function(e){
+      if(htmlEl.getAttribute('data-view') !== 'spiral' || document.body.classList.contains('panel-open')) return;
+      e.preventDefault();
+      wheelAcc += e.deltaY;
+      var step = Math.round(wheelAcc / 340);
+      if(step !== 0){
+        wheelAcc = 0;
+        vTarget = Math.max(0, Math.min(N-1, Math.round(vTarget) + step));
+      }
+    }, { passive:false });
+
+    var dragY = null, dragStartTarget = 0, dragMoved = 0, dragPid = null;
+    deck.addEventListener('pointerdown', function(e){
+      if(document.body.classList.contains('panel-open')) return;
+      dragY = e.clientY; dragStartTarget = vTarget; dragMoved = 0; dragPid = e.pointerId;
+      deck.classList.add('dragging');
+      /* capture is taken lazily in pointermove, once real movement starts —
+         a plain press shouldn't grab the pointer or nudge the deck */
+    });
+    deck.addEventListener('pointermove', function(e){
+      if(dragY === null) return;
+      var dy = e.clientY - dragY;
+      dragMoved = Math.max(dragMoved, Math.abs(dy));
+      if(dragMoved <= 5) return; /* still a click, not a drag */
+      if(dragPid !== null && deck.setPointerCapture){
+        try{ deck.setPointerCapture(dragPid); }catch(err){}
+        dragPid = null;
+      }
+      vTarget = Math.max(-0.35, Math.min(N-1+0.35, dragStartTarget - dy/230));
+    });
+    function endDrag(){
+      if(dragY === null) return;
+      dragY = null;
+      deck.classList.remove('dragging');
+      vTarget = Math.max(0, Math.min(N-1, Math.round(vTarget + vVel*6)));
+    }
+    deck.addEventListener('pointerup', endDrag);
+    deck.addEventListener('pointercancel', endDrag);
+
+    addEventListener('keydown', function(e){
+      if(htmlEl.getAttribute('data-view') !== 'spiral') return;
+      if(document.body.classList.contains('panel-open')){
+        if(e.key === 'Escape') closePanel();
+        return;
+      }
+      if(e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); vTarget = Math.min(N-1, Math.round(vTarget)+1); }
+      if(e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); vTarget = Math.max(0, Math.round(vTarget)-1); }
+      if(e.key === 'Enter'){ var f = Math.round(vPos); if(CARDS[f] && CARDS[f].id !== 'hero') openPanel(CARDS[f].id); }
+    });
+  }
+
+  /* ---------- reading panel ---------- */
+  var activeSection = null;
+  function openPanel(id){
+    var sec = $(id); if(!sec) return;
+    document.querySelectorAll('main section').forEach(function(s){ s.classList.remove('active'); });
+    sec.classList.add('active'); sec.classList.add('on');
+    document.body.classList.add('panel-open');
+    document.querySelector('main').scrollTop = 0;
+    activeSection = id;
+    if(bloomHandle) bloomHandle.pause();
+    panelHinted = false;
+    armIdle();
+    updateNowPlaying();
+  }
+  function closePanel(){
+    document.body.classList.remove('panel-open');
+    document.querySelectorAll('main section').forEach(function(s){ s.classList.remove('active'); });
+    activeSection = null;
+    if(bloomHandle) bloomHandle.resume();
+    armIdle();
+    updateNowPlaying();
+    tick(392);
+  }
+  $('panelclose').addEventListener('click', function(e){ juice(e, 392); closePanel(); });
+  $('caption').addEventListener('click', function(e){
+    var f = Math.round(vPos);
+    if(CARDS[f] && CARDS[f].id !== 'hero'){ juice(e, 659); openPanel(CARDS[f].id); }
+    else { vTarget = Math.min(N-1, f+1); juice(e, 587); }
+  });
+  $('homelink').addEventListener('click', function(e){
+    e.preventDefault();
+    if(htmlEl.getAttribute('data-view') === 'spiral'){ closePanel(); vTarget = 0; }
+    else { try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(err){ window.scrollTo(0,0); } }
+  });
+
+  /* ---------- view switching ---------- */
+  var viewBtns = document.querySelectorAll('[data-setview]');
+  function setView(v){
+    closePanel();
+    htmlEl.setAttribute('data-view', v);
+    viewBtns.forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-setview') === v)); });
+    try{ sessionStorage.setItem('sys_view', v); }catch(e){}
+    if(v === 'list'){
+      dismissGuide();
+      setSun(scrollProgress());
+    }else{
+      try{ window.scrollTo(0,0); }catch(e){}
+      setSun(vPos / (N-1));
+      if(ambienceOn) maybeShowGuide();
+    }
+    armIdle();
+  }
+  viewBtns.forEach(function(b){
+    b.addEventListener('click', function(e){ setView(b.getAttribute('data-setview')); juice(e, 587); });
+  });
+
+  /* ---------- ambience boot ---------- */
+  var ambienceOn = false;
+  function startAmbience(){
+    if(ambienceOn) return; ambienceOn = true;
+    startBloom(); startParticles(); initCursor(); initMagnetic(); initTrail();
+    deckRunning = true;
+    requestAnimationFrame(deckLoop);
+    layoutDeck();
+    lastRise = -1;
+    setSun(htmlEl.getAttribute('data-view') === 'spiral' ? vPos/(N-1) : scrollProgress());
+    maybeShowGuide();
+    armIdle();
+  }
+
+  /* ---------- gate + preloader ---------- */
+  var gate = $('gate');
+  var form = $('gate-form');
+  var pw = $('pw');
+  var err = $('gate-err');
+  var KEY = 'TU9TVU4='; // soft gate only — real access control lives on disco
+
+  function runPreloader(done){
+    var el = $('preCount'); $('pre').classList.add('show');
+    if(prefersReduced){ el.textContent = '100'; setTimeout(function(){ $('pre').classList.add('gone'); setTimeout(done, 400); }, 300); return; }
+    var start = null, dur = 1400;
+    function frame(ts){
+      if(start === null) start = ts;
+      var p = Math.min(1, (ts-start)/dur); var eased = 1 - Math.pow(1-p, 3);
+      el.textContent = String(Math.round(eased*100)).padStart(2, '0');
+      if(p < 1) requestAnimationFrame(frame);
+      else setTimeout(function(){ $('pre').classList.add('gone'); setTimeout(done, 600); }, 250);
+    }
+    requestAnimationFrame(frame);
+  }
+  function reveal(){
+    document.body.classList.remove('locked');
+    try{ window.scrollTo({ top:0, left:0, behavior:'instant' }); }catch(e){ window.scrollTo(0,0); }
+    startAmbience();
+  }
+  function unlock(){
+    gate.classList.add('open');
+    window.setTimeout(function(){ gate.remove(); }, 1000);
+    runPreloader(reveal);
+  }
+  try{
+    if(sessionStorage.getItem('sys_gate') === '1'){
+      gate.remove();
+      document.body.classList.remove('locked');
+      startAmbience();
+    }
+  }catch(e){}
+  var pendingSound = null;
+  form.querySelectorAll('button[data-sound]').forEach(function(b){
+    b.addEventListener('click', function(){ pendingSound = b.getAttribute('data-sound'); });
+  });
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var guess = pw.value.trim().toUpperCase();
+    var ok = false;
+    try{ ok = btoa(guess) === KEY; }catch(e){ ok = false; }
+    if(ok){
+      if(pendingSound){
+        soundOn = pendingSound === 'on';
+        try{ localStorage.setItem('sys_sound', soundOn ? 'on' : 'off'); }catch(e){}
+        updateMute();
+      }
+      try{ sessionStorage.setItem('sys_gate','1'); }catch(e){}
+      tick(784); buzz([12,40,18]);
+      unlock();
+    }else{
+      err.textContent = htmlEl.getAttribute('data-lang') === 'zh' ? '密碼不對，再試一次。' : "that's not it. try again.";
+      pw.value = '';
+      tick(220); buzz(30);
+      form.classList.remove('shake');
+      void form.offsetWidth;
+      form.classList.add('shake');
+    }
+  });
+
+  /* ---------- first-visit guide (spiral view only, once per session) ---------- */
+  var guideShown = false;
+  function maybeShowGuide(){
+    if(guideShown) return;
+    if(htmlEl.getAttribute('data-view') !== 'spiral' || prefersReduced) return;
+    try{ if(sessionStorage.getItem('sys_guide') === '1') return; }catch(e){}
+    guideShown = true;
+    $('guide').classList.add('show');
+  }
+  function dismissGuide(){
+    var g = $('guide');
+    if(!g || !g.classList.contains('show') || g.classList.contains('gone')) return;
+    g.classList.add('gone');
+    try{ sessionStorage.setItem('sys_guide','1'); }catch(e){}
+    setTimeout(function(){ g.remove(); }, 900);
+    armIdle();
+  }
+  $('guideGo').addEventListener('click', function(e){ juice(e, 659); dismissGuide(); });
+  $('guide').addEventListener('wheel', function(e){ e.preventDefault(); dismissGuide(); }, { passive:false });
+  $('guide').addEventListener('pointerdown', function(e){ if(e.target === e.currentTarget) dismissGuide(); });
+  addEventListener('keydown', function(){
+    var g = $('guide');
+    if(g && g.classList.contains('show')) dismissGuide();
+  });
+
+  /* ---------- click juice on real actions ---------- */
+  document.querySelectorAll('.contact-ctas .btn').forEach(function(a){
+    a.addEventListener('click', function(ev){ juice(ev, 659); });
+  });
+
+  /* ---------- listening room player ---------- */
+  var audioEl = null, curTrack = null;
+  var trackRows = Array.prototype.slice.call(document.querySelectorAll('#player .track'));
+
+  function fmtTime(s){
+    s = Math.max(0, Math.round(s || 0));
+    return Math.floor(s/60) + ':' + ('0' + (s % 60)).slice(-2);
+  }
+  function rowDur(row){ return parseFloat(row.getAttribute('data-dur')) || 0; }
+  function rowFill(row){ return row.querySelector('.pfill'); }
+  function rowTime(row){ return row.querySelector('.ptime'); }
+
+  function ensureAudio(){
+    if(audioEl) return audioEl;
+    audioEl = new Audio();
+    audioEl.preload = 'auto';
+    audioEl.addEventListener('timeupdate', paintProgress);
+    audioEl.addEventListener('play', updatePlayerUI);
+    audioEl.addEventListener('pause', updatePlayerUI);
+    audioEl.addEventListener('ended', function(){
+      var next = trackRows[trackRows.indexOf(curTrack) + 1];
+      if(next){ playRow(next); } else { stopPlayback(); }
+    });
+    return audioEl;
+  }
+  function paintProgress(){
+    if(!curTrack || !audioEl) return;
+    var dur = audioEl.duration || rowDur(curTrack);
+    var t = audioEl.currentTime || 0;
+    if(dur > 0) rowFill(curTrack).style.width = Math.min(100, t/dur*100).toFixed(2) + '%';
+    rowTime(curTrack).textContent = fmtTime(t) + ' · ' + fmtTime(dur);
+  }
+  function resetRow(row){
+    row.classList.remove('playing', 'paused');
+    rowFill(row).style.width = '0%';
+    rowTime(row).textContent = fmtTime(rowDur(row));
+  }
+  function updatePlayerUI(){
+    trackRows.forEach(function(r){ if(r !== curTrack) resetRow(r); });
+    if(curTrack){
+      var playing = !!(audioEl && !audioEl.paused);
+      curTrack.classList.toggle('playing', playing);
+      curTrack.classList.toggle('paused', !playing);
+    }
+    updateNowPlaying();
+  }
+  function stopPlayback(){
+    if(audioEl){ audioEl.pause(); try{ audioEl.currentTime = 0; }catch(e){} }
+    if(curTrack){ resetRow(curTrack); curTrack = null; }
+    updateNowPlaying();
+  }
+  function playRow(row){
+    var a = ensureAudio();
+    if(curTrack === row){
+      if(a.paused){ a.play().catch(function(){}); } else { a.pause(); }
+      updatePlayerUI();
+      return;
+    }
+    if(curTrack) resetRow(curTrack);
+    curTrack = row;
+    a.src = row.getAttribute('data-src');
+    a.play().catch(function(){});
+    paintProgress();
+    updatePlayerUI();
+  }
+  function updateNowPlaying(){
+    var np = $('nowplaying'); if(!np) return;
+    var show = !!curTrack && activeSection !== 'listen';
+    np.classList.toggle('show', show);
+    if(curTrack){
+      np.classList.toggle('paused', !(audioEl && !audioEl.paused));
+      np.querySelector('.npt').textContent = curTrack.querySelector('.title').textContent;
+    }
+  }
+  trackRows.forEach(function(row){
+    resetRow(row);
+    row.addEventListener('click', function(e){ juice(e, 659); playRow(row); });
+    var bar = row.querySelector('.pbar');
+    var line = row.querySelector('.pline');
+    function seekTo(clientX){
+      if(curTrack !== row || !audioEl) return;
+      var r = line.getBoundingClientRect();
+      if(r.width <= 0) return;
+      var p = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+      var dur = audioEl.duration || rowDur(row);
+      if(dur > 0){ try{ audioEl.currentTime = p * dur; }catch(e){} paintProgress(); }
+    }
+    bar.addEventListener('click', function(e){ e.stopPropagation(); });
+    bar.addEventListener('pointerdown', function(e){
+      e.stopPropagation(); e.preventDefault();
+      if(curTrack !== row) playRow(row);
+      seekTo(e.clientX);
+      function mv(ev){ seekTo(ev.clientX); }
+      function up(){ removeEventListener('pointermove', mv); removeEventListener('pointerup', up); }
+      addEventListener('pointermove', mv);
+      addEventListener('pointerup', up);
+    });
+  });
+  function npToggle(e){
+    if(curTrack){ playRow(curTrack); }
+    if(e) juice(e, 523);
+  }
+  $('nowplaying').addEventListener('click', function(e){ e.stopPropagation(); npToggle(e); });
+  $('nowplaying').addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); npToggle(); }
+  });
+
+  /* ---------- boot ---------- */
+  splitTitles();
+  initReveals();
+  buildDeck();
+  bindDeckInput();
+  var startView = 'spiral';
+  try{
+    var savedView = sessionStorage.getItem('sys_view');
+    if(savedView === 'list' || savedView === 'spiral') startView = savedView;
+    else if(prefersReduced) startView = 'list';
+  }catch(e){ if(prefersReduced) startView = 'list'; }
+  setView(startView);
+  layoutDeck();
+  updateCaption();
+  setSun(0);
+})();
+</script>
+</body>
+</html>
