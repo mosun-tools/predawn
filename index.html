@@ -1797,6 +1797,13 @@
     else if(prefersReduced) startView = 'list';
   }catch(e){ if(prefersReduced) startView = 'list'; }
   setView(startView);
+  /* until the gate + preloader lift, keep the circles unborn — otherwise they
+     flash fully-formed behind the preloader fade before the guide appears
+     (skip when startAmbience already ran for an unlocked session) */
+  if(!ambienceOn && htmlEl.getAttribute('data-view') === 'spiral' && !prefersReduced){
+    introPlay(1150, 1);
+    introT0 = Infinity;
+  }
   layoutDeck();
   updateCaption();
   setSun(0);
