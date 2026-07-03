@@ -1328,58 +1328,40 @@
     });
   }
 
-  /* entrance — the night assembles its orbit: a point of light blooms into the
-     first circle, and the rest corkscrew out from behind it along the helix,
-     each trailing a saffron shimmer that fades as it finds its seat */
-  var introT0 = 0, introDur = 1150, introAmt = 1, introDone = true;
-  function introPlay(dur, amt){
+  /* the circles stay hidden behind the preloader and guide, then simply fade in —
+     no choreography, just a quiet arrival */
+  var introT0 = 0, introDur = 900, introDone = true;
+  function introPlay(dur){
     if(prefersReduced){ introDone = true; return; }
-    introT0 = performance.now(); introDur = dur; introAmt = amt; introDone = false;
-  }
-  function introK(i, now){
-    var t = (now - introT0 - i*130) / introDur;
-    if(t <= 0) return 0;
-    if(t >= 1) return 1;
-    var s = 1.2; t -= 1;
-    return 1 + t*t*((s+1)*t + s); /* easeOutBack — swings a touch past the seat, then settles */
+    introT0 = performance.now(); introDur = dur; introDone = false;
   }
   function layoutDeck(){
     var isMobile = innerWidth < 700;
     var RX = isMobile ? innerWidth*0.46 : Math.min(innerWidth*0.34, 470);
     var RZ = isMobile ? 420 : 560;
     var vel = Math.min(14, Math.abs(vVel)*46);
-    var now = introDone ? 0 : performance.now();
-    var settled = true;
+    var kc = 1;
+    if(!introDone){
+      var t = (performance.now() - introT0) / introDur;
+      if(t >= 1){ kc = 1; introDone = true; }
+      else kc = t <= 0 ? 0 : 1 - Math.pow(1 - t, 3);
+    }
     for(var i = 0; i < N; i++){
       var d = i - vPos;
+      var a = d * 0.85;
+      var x = Math.sin(a) * RX;
+      var z = (Math.cos(a) - 1) * RZ - Math.abs(d)*60;
+      var y = d * (isMobile ? -30 : -44);
+      var rY = Math.sin(a) * -24;
       var ad = Math.abs(d);
       var el = deckEls[i];
-      var k = 1, kc = 1, glow = 0;
-      if(!introDone){
-        k = introK(i, now);
-        if(k < 1) settled = false;
-        kc = Math.max(0, Math.min(1, k));
-        glow = Math.sin(Math.PI * kc) * (i === 0 ? 0.5 : 0.3) * introAmt;
-      }
-      /* wound tighter around the spiral at k=0, unwinding into place at k=1 */
-      var a = d * (0.85 + (1 - k) * 1.15 * introAmt);
-      var x = Math.sin(a) * RX * (introDone ? 1 : 0.3 + 0.7*k);
-      var z = (Math.cos(a) - 1) * RZ - ad*60 + (introDone ? 0 : (1 - k) * -320 * introAmt);
-      var y = d * (isMobile ? -30 : -44) * (introDone ? 1 : 0.55 + 0.45*k) + (introDone ? 0 : (1 - kc) * 34 * introAmt);
-      var rY = Math.sin(a) * -24 - (introDone ? 0 : (1 - k) * 26 * introAmt);
-      var sc = introDone ? 1 : (i === 0 ? 0.18 + 0.82*k : 0.55 + 0.45*k);
-      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' + rY + 'deg)' + (introDone ? '' : ' scale(' + Math.max(0.05, sc).toFixed(3) + ')');
-      var blur = Math.min(9, ad*2.6 + (ad > 0.35 ? vel : vel*0.4)) + (1-kc)*7;
+      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' + rY + 'deg)';
+      var blur = Math.min(9, ad*2.6 + (ad > 0.35 ? vel : vel*0.4));
       el.style.filter = 'blur(' + blur.toFixed(2) + 'px)';
-      el.style.opacity = String(Math.max(0, 1 - ad*0.26) * Math.min(1, kc*1.35));
+      el.style.opacity = String(Math.max(0, 1 - ad*0.26) * kc);
       el.style.zIndex = String(100 - Math.round(ad*10));
       el.style.visibility = ad > 3.6 ? 'hidden' : 'visible';
-      if(!introDone) el.style.boxShadow = glow > 0.01 ? '0 0 72px -6px rgba(246,162,92,' + glow.toFixed(3) + ')' : '';
       if(ad < 0.35){ el.classList.add('focus'); } else { el.classList.remove('focus'); }
-    }
-    if(!introDone && settled){
-      introDone = true;
-      for(var j = 0; j < N; j++) deckEls[j].style.boxShadow = '';
     }
   }
 
@@ -1554,8 +1536,8 @@
       setSun(vPos / (N-1));
       if(ambienceOn){
         maybeShowGuide();
-        if(guideShowing()){ introPlay(1150, 1); introT0 = Infinity; }
-        else introPlay(650, 0.45); /* returning from list — a quicker, shallower assembly */
+        if(guideShowing()){ introPlay(900); introT0 = Infinity; }
+        else introPlay(500); /* returning from list — a quicker fade */
       }
     }
     armIdle();
@@ -1576,8 +1558,8 @@
     setSun(htmlEl.getAttribute('data-view') === 'spiral' ? vPos/(N-1) : scrollProgress());
     maybeShowGuide();
     if(htmlEl.getAttribute('data-view') === 'spiral'){
-      introPlay(1150, 1);
-      if(guideShowing()) introT0 = Infinity; /* hold below the horizon until "begin the night" */
+      introPlay(900);
+      if(guideShowing()) introT0 = Infinity; /* hold until "begin the night" */
     }
     armIdle();
   }
@@ -1662,7 +1644,7 @@
     g.classList.add('gone');
     try{ sessionStorage.setItem('sys_guide','1'); }catch(e){}
     setTimeout(function(){ g.remove(); }, 900);
-    if(ambienceOn && htmlEl.getAttribute('data-view') === 'spiral') introPlay(1150, 1);
+    if(ambienceOn && htmlEl.getAttribute('data-view') === 'spiral') introPlay(900);
     armIdle();
   }
   $('guideGo').addEventListener('click', function(e){ juice(e, 659); dismissGuide(); });
@@ -1797,11 +1779,11 @@
     else if(prefersReduced) startView = 'list';
   }catch(e){ if(prefersReduced) startView = 'list'; }
   setView(startView);
-  /* until the gate + preloader lift, keep the circles unborn — otherwise they
+  /* until the gate + preloader lift, keep the circles hidden — otherwise they
      flash fully-formed behind the preloader fade before the guide appears
      (skip when startAmbience already ran for an unlocked session) */
   if(!ambienceOn && htmlEl.getAttribute('data-view') === 'spiral' && !prefersReduced){
-    introPlay(1150, 1);
+    introPlay(900);
     introT0 = Infinity;
   }
   layoutDeck();
