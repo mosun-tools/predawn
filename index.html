@@ -1328,11 +1328,27 @@
     });
   }
 
+  /* entrance — the circles surface out of the sun's glow below the horizon,
+     unwinding into the helix one after another, with a soft overshoot as they settle */
+  var introT0 = 0, introDur = 1150, introLift = 1, introDone = true;
+  function introPlay(dur, lift){
+    if(prefersReduced){ introDone = true; return; }
+    introT0 = performance.now(); introDur = dur; introLift = lift; introDone = false;
+  }
+  function introK(i, now){
+    var t = (now - introT0 - i*110) / introDur;
+    if(t <= 0) return 0;
+    if(t >= 1) return 1;
+    var s = 1.2; t -= 1;
+    return 1 + t*t*((s+1)*t + s); /* easeOutBack — rises a touch past its seat, then settles */
+  }
   function layoutDeck(){
     var isMobile = innerWidth < 700;
     var RX = isMobile ? innerWidth*0.46 : Math.min(innerWidth*0.34, 470);
     var RZ = isMobile ? 420 : 560;
     var vel = Math.min(14, Math.abs(vVel)*46);
+    var now = introDone ? 0 : performance.now();
+    var settled = true;
     for(var i = 0; i < N; i++){
       var d = i - vPos;
       var a = d * 0.85;
@@ -1342,14 +1358,27 @@
       var rY = Math.sin(a) * -24;
       var ad = Math.abs(d);
       var el = deckEls[i];
-      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' + rY + 'deg)';
-      var blur = Math.min(9, ad*2.6 + (ad > 0.35 ? vel : vel*0.4));
+      var k = 1, kc = 1, sc = 1;
+      if(!introDone){
+        k = introK(i, now);
+        if(k < 1) settled = false;
+        kc = Math.max(0, Math.min(1, k));
+        var lift = 1 - k;
+        x *= 0.3 + 0.7*k;                                    /* gathered over the glow, spreading out */
+        y += lift * (innerHeight*0.62 + i*36) * introLift;   /* rising from below the horizon */
+        z += lift * -160;
+        rY += lift * -38;                                    /* unwinding as they climb */
+        sc = 0.72 + 0.28*k;
+      }
+      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,' + z + 'px) rotateY(' + rY + 'deg)' + (introDone ? '' : ' scale(' + sc.toFixed(3) + ')');
+      var blur = Math.min(9, ad*2.6 + (ad > 0.35 ? vel : vel*0.4)) + (1-kc)*9;
       el.style.filter = 'blur(' + blur.toFixed(2) + 'px)';
-      el.style.opacity = String(Math.max(0, 1 - ad*0.26));
+      el.style.opacity = String(Math.max(0, 1 - ad*0.26) * kc);
       el.style.zIndex = String(100 - Math.round(ad*10));
       el.style.visibility = ad > 3.6 ? 'hidden' : 'visible';
       if(ad < 0.35){ el.classList.add('focus'); } else { el.classList.remove('focus'); }
     }
+    if(!introDone && settled) introDone = true;
   }
 
   /* idle hint — after 3 seconds with no input, quietly say what to do next */
@@ -1521,7 +1550,11 @@
     }else{
       try{ window.scrollTo(0,0); }catch(e){}
       setSun(vPos / (N-1));
-      if(ambienceOn) maybeShowGuide();
+      if(ambienceOn){
+        maybeShowGuide();
+        if(guideShowing()){ introPlay(1150, 1); introT0 = Infinity; }
+        else introPlay(650, 0.35); /* returning from list — a quicker, shallower rise */
+      }
     }
     armIdle();
   }
@@ -1540,6 +1573,10 @@
     lastRise = -1;
     setSun(htmlEl.getAttribute('data-view') === 'spiral' ? vPos/(N-1) : scrollProgress());
     maybeShowGuide();
+    if(htmlEl.getAttribute('data-view') === 'spiral'){
+      introPlay(1150, 1);
+      if(guideShowing()) introT0 = Infinity; /* hold below the horizon until "begin the night" */
+    }
     armIdle();
   }
 
@@ -1623,6 +1660,7 @@
     g.classList.add('gone');
     try{ sessionStorage.setItem('sys_guide','1'); }catch(e){}
     setTimeout(function(){ g.remove(); }, 900);
+    if(ambienceOn && htmlEl.getAttribute('data-view') === 'spiral') introPlay(1150, 1);
     armIdle();
   }
   $('guideGo').addEventListener('click', function(e){ juice(e, 659); dismissGuide(); });
