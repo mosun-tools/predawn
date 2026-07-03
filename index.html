@@ -174,6 +174,8 @@
   .card3d .veil{ position:absolute; inset:0; background:radial-gradient(circle at 50% 36%, rgba(0,0,0,.14), rgba(0,0,0,.64) 82%); }
   .card3d .rn{ font-family:var(--font-deco); font-size:44px; color:var(--saffron); line-height:1; position:relative; }
   .card3d .t{ font-family:var(--font-display); font-weight:400; font-size:clamp(17px,2.6vw,24px); letter-spacing:0.22em; text-indent:0.22em; text-transform:uppercase; color:var(--cream); position:relative; }
+  /* explicit color — buttons fall back to UA text color otherwise (system blue on ios) */
+  .card3d .wordline{ font-family:var(--font-display); font-weight:400; font-size:clamp(22px,3.4vw,30px); letter-spacing:0.3em; text-indent:0.3em; text-transform:uppercase; color:var(--cream); position:relative; margin-bottom:10px; }
   .card3d .s{ font-size:10px; letter-spacing:0.26em; text-transform:uppercase; color:var(--n2); position:relative; }
   .card3d.focus{ border-color:rgba(246,162,92,.7); box-shadow:0 0 0 1px rgba(246,162,92,.4), 0 0 90px -24px var(--saffron); }
   .card3d .biglogo{ width:30%; position:relative; }
@@ -230,6 +232,12 @@
     font-size:10px; letter-spacing:0.26em; text-transform:uppercase; color:var(--saffron); opacity:0; transition:opacity .8s var(--ease); }
   #openhint .oh{ display:none; }
   #openhint[data-k="scroll"] .oh-scroll, #openhint[data-k="open"] .oh-open, #openhint[data-k="panel"] .oh-panel{ display:inline; }
+  /* device-specific instruction wording — mice get buttons and keys, thumbs get taps */
+  .dev-coarse{ display:none; }
+  @media (pointer:coarse){
+    .dev-fine{ display:none; }
+    .dev-coarse{ display:inline; }
+  }
   #openhint.show{ opacity:1; animation:hintpulse 2.6s var(--ease) infinite; }
   @keyframes hintpulse{ 0%,100%{ opacity:.4; } 50%{ opacity:1; } }
   @media (prefers-reduced-motion: reduce){ #openhint.show{ animation:none; opacity:.8; } }
@@ -477,8 +485,10 @@
         <path d="M21 33v4"/><path d="M18.5 34.8 21 37.3l2.5-2.5"/>
       </svg>
       <div class="tx">
-        <span class="en">scroll, drag, or use the arrow keys — the circles travel the night.</span>
-        <span class="zh">滾動、拖曳、或用方向鍵——圓圈會帶你穿過夜晚。</span>
+        <span class="dev-fine"><span class="en">scroll, drag, or use the arrow keys — the circles travel the night.</span>
+        <span class="zh">滾動、拖曳、或用方向鍵——圓圈會帶你穿過夜晚。</span></span>
+        <span class="dev-coarse"><span class="en">swipe up or down — the circles travel the night.</span>
+        <span class="zh">上下滑動——圓圈會帶你穿過夜晚。</span></span>
       </div>
     </div>
     <div class="guide-row">
@@ -486,8 +496,10 @@
         <circle cx="21" cy="21" r="13"/><line x1="21" y1="16.5" x2="21" y2="25.5"/><line x1="16.5" y1="21" x2="25.5" y2="21"/>
       </svg>
       <div class="tx">
-        <span class="en">open with the button at the bottom — esc or close brings you back.</span>
-        <span class="zh">用底部的按鈕開啟——esc 或「關閉」都能回來。</span>
+        <span class="dev-fine"><span class="en">open with the button at the bottom — esc or close brings you back.</span>
+        <span class="zh">用底部的按鈕開啟——esc 或「關閉」都能回來。</span></span>
+        <span class="dev-coarse"><span class="en">tap the glowing circle — it opens. close brings you back.</span>
+        <span class="zh">點一下發光的圓就會打開。「關閉」能回來。</span></span>
       </div>
     </div>
     <p class="guide-note">
@@ -499,8 +511,8 @@
 </div>
 
 <div id="openhint" aria-hidden="true">
-  <span class="oh oh-scroll"><span class="en">scroll, drag, or use the arrow keys</span><span class="zh">滾動、拖曳，或用方向鍵</span></span>
-  <span class="oh oh-open"><span class="en">open with the button below</span><span class="zh">用下方按鈕開啟</span></span>
+  <span class="oh oh-scroll"><span class="dev-fine"><span class="en">scroll, drag, or use the arrow keys</span><span class="zh">滾動、拖曳，或用方向鍵</span></span><span class="dev-coarse"><span class="en">swipe up or down</span><span class="zh">上下滑動</span></span></span>
+  <span class="oh oh-open"><span class="dev-fine"><span class="en">open with the button below</span><span class="zh">用下方按鈕開啟</span></span><span class="dev-coarse"><span class="en">tap the circle to open</span><span class="zh">點一下圓圈開啟</span></span></span>
   <span class="oh oh-panel"><span class="en">scroll to read — esc or close brings you back</span><span class="zh">捲動閱讀——esc 或「關閉」都能回來</span></span>
 </div>
 <div id="nowplaying" class="mag" role="button" tabindex="0" aria-label="pause or resume playback"><span class="npdot"></span><span class="npt"></span></div>
@@ -823,6 +835,7 @@
   var htmlEl = document.documentElement;
   var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = window.matchMedia && window.matchMedia('(pointer:fine)').matches;
+  var coarsePointer = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
   var hidden = false;
   document.addEventListener('visibilitychange', function(){ hidden = document.hidden; });
 
@@ -1318,8 +1331,20 @@
           '<div class="s"><span class="en">' + c.s.en + '</span><span class="zh">' + c.s.zh + '</span></div></div>';
       }
       el.innerHTML = inner;
-      /* the circles themselves are not clickable — panels open via the caption
-         button at the bottom (or enter); the deck surface is for scroll/drag only */
+      /* desktop: circles are not clickable — panels open via the caption button
+         (or enter). touch: no cursor affordance exists, so a tap on the focused
+         circle opens it; a tap on a side circle travels to it */
+      el.addEventListener('click', function(e){
+        if(!coarsePointer) return;
+        if(dragMovedRef() > 8) return; /* a drag that ended here is not a tap */
+        var i2 = parseInt(el.getAttribute('data-i'), 10);
+        if(Math.round(vPos) === i2 && Math.abs(vPos - i2) < 0.2){
+          if(CARDS[i2].id !== 'hero'){ juice(e, 659); openPanel(CARDS[i2].id); }
+          else { vTarget = Math.min(N-1, i2 + 1); juice(e, 587); }
+        }else{
+          vTarget = i2; juice(e, 587);
+        }
+      });
       deck.appendChild(el);
       deckEls.push(el);
     });
@@ -1430,6 +1455,7 @@
     requestAnimationFrame(deckLoop);
   }
 
+  var dragMovedRef = function(){ return 0; }; /* lets card taps see how far the last gesture dragged */
   function bindDeckInput(){
     var wheelAcc = 0;
     addEventListener('wheel', function(e){
@@ -1444,6 +1470,7 @@
     }, { passive:false });
 
     var dragY = null, dragStartTarget = 0, dragMoved = 0, dragPid = null;
+    dragMovedRef = function(){ return dragMoved; };
     deck.addEventListener('pointerdown', function(e){
       if(document.body.classList.contains('panel-open')) return;
       dragY = e.clientY; dragStartTarget = vTarget; dragMoved = 0; dragPid = e.pointerId;
