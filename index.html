@@ -360,6 +360,19 @@
   @media (prefers-reduced-motion: reduce){ #nowplaying .npdot{ animation:none; } }
   .lr-note{ margin-top:24px; font-size:12px; color:var(--n3); letter-spacing:.04em; }
 
+  /* full production-team credits (from the grant dossier) */
+  .credits-h{ margin-top:54px; font-family:var(--font-display); font-weight:400; font-size:12px;
+    letter-spacing:.3em; text-transform:uppercase; color:var(--n2); }
+  .credits{ margin-top:18px; border-top:1px solid var(--hairline); }
+  .credits li{ list-style:none; display:grid; grid-template-columns:160px 1fr; gap:6px 22px;
+    padding:17px 0; border-bottom:1px solid var(--hairline); }
+  .credits .role{ font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:var(--saffron); padding-top:3px; }
+  .credits .person{ margin-bottom:12px; }
+  .credits .person:last-child{ margin-bottom:0; }
+  .credits .pname{ font-size:15px; color:var(--cream); letter-spacing:.02em; }
+  .credits .pcred{ font-size:12.5px; color:var(--n2); margin-top:2px; line-height:1.75; }
+  @media (max-width:600px){ .credits li{ grid-template-columns:1fr; gap:8px; } }
+
   .timeline{ margin-top:44px; border-left:1px solid var(--hairline); padding-left:32px; display:flex; flex-direction:column; gap:40px; }
   .timeline li{ list-style:none; position:relative; }
   .timeline li::before{ content:''; position:absolute; left:-36.5px; top:7px; width:9px; height:9px; border-radius:50%;
@@ -616,6 +629,100 @@
           <dd>更日未來有限公司 × warner chappell</dd>
         </div>
       </dl>
+      <h3 class="credits-h reveal-el"><span class="en">the team</span><span class="zh">製作團隊</span></h3>
+      <ul class="credits reveal-el">
+        <li>
+          <span class="role"><span class="en">produced &amp; written by</span><span class="zh">製作人</span></span>
+          <div>
+            <div class="person">
+              <div class="pname">mosun 馬仕釗</div>
+              <div class="pcred"><span class="en">writing, production, vocals, recording — credits with 蔡依林 jolin tsai and 艾怡良 eve ai; helped build blackpink's coachella live show</span><span class="zh">詞曲、製作、主唱、錄音——參與蔡依林、艾怡良作品，並協助製作 blackpink coachella 現場音樂</span></div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="role"><span class="en">songwriting</span><span class="zh">詞曲創作</span></span>
+          <div>
+            <div class="person">
+              <div class="pname">j.sheon</div>
+              <div class="pcred"><span class="en">golden melody–nominated r&amp;b artist; also a featured voice on the record</span><span class="zh">金曲獎入圍 r&amp;b 歌手；同時為專輯合作歌手</span></div>
+            </div>
+            <div class="person">
+              <div class="pname">張伍 changwu</div>
+              <div class="pcred"><span class="en">smashregz — golden indie music award, best hip-hop album</span><span class="zh">違法 smashregz——金音獎最佳嘻哈專輯</span></div>
+            </div>
+            <div class="person">
+              <div class="pname">elin lee 李宜玲</div>
+              <div class="pcred"><span class="en">berklee-trained pianist &amp; producer — julia 吳卓源, 陶喆, 田馥甄; also arranging on the record</span><span class="zh">伯克利出身的鋼琴家、製作人——吳卓源專輯製作人；陶喆、田馥甄樂手；同時參與編曲</span></div>
+            </div>
+            <div class="person">
+              <div class="pname">黃瑋昕</div>
+              <div class="pcred"><span class="en">golden melody best-new-artist nominee (love maze)</span><span class="zh">金曲獎最佳新人入圍（love maze）</span></div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="role"><span class="en">arrangement &amp; production</span><span class="zh">編曲製作</span></span>
+          <div>
+            <div class="person">
+              <div class="pname">starr chen 陳星翰</div>
+              <div class="pcred"><span class="en">golden melody best single producer — jolin tsai「play 我呸」</span><span class="zh">金曲獎最佳單曲製作人——蔡依林〈play 我呸〉</span></div>
+            </div>
+            <div class="person">
+              <div class="pname">liv 王韻筑</div>
+              <div class="pcred"><span class="en">strings &amp; arrangement — 張韶涵, 孫盛希, 盧廣仲</span><span class="zh">弦樂編寫——張韶涵、孫盛希、盧廣仲</span></div>
+            </div>
+            <div class="person">
+              <div class="pname">andrø pop</div>
+              <div class="pcred"><span class="en">latin grammy–winning producer — becky g, gente de zona</span><span class="zh">拉丁葛萊美獎製作人——becky g、gente de zona</span></div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="role"><span class="en">the band</span><span class="zh">樂手</span></span>
+          <div>
+            <div class="person">
+              <div class="pname">will wu</div>
+              <div class="pcred"><span class="en">guitar — fifth harmony, big sean, sofia carson</span><span class="zh">吉他——fifth harmony、big sean、sofia carson</span></div>
+            </div>
+            <div class="person">
+              <div class="pname">fabian egger</div>
+              <div class="pcred"><span class="en">drums — nicki minaj, drake and big sean tours; the super bowl</span><span class="zh">鼓——nicki minaj、drake、big sean 巡演；超級盃</span></div>
+            </div>
+            <div class="person">
+              <div class="pname">nevon sinclair</div>
+              <div class="pcred"><span class="en">vocal direction — daniel caesar's freudian</span><span class="zh">人聲指導——daniel caesar《freudian》</span></div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="role"><span class="en">mix &amp; master</span><span class="zh">混音・母帶</span></span>
+          <div>
+            <div class="person">
+              <div class="pname">john greenham</div>
+              <div class="pcred"><span class="en">four-time grammy winner — billie eilish, sam smith, lady gaga</span><span class="zh">四座葛萊美得主——billie eilish、sam smith、lady gaga</span></div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="role"><span class="en">photography</span><span class="zh">視覺攝影</span></span>
+          <div>
+            <div class="person">
+              <div class="pname">arki johnson 游懿軒</div>
+              <div class="pcred"><span class="en">asap rocky, 頑童mj116, øzi</span><span class="zh">asap rocky、頑童mj116、øzi</span></div>
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="role"><span class="en">coordination</span><span class="zh">製作統籌</span></span>
+          <div>
+            <div class="person">
+              <div class="pname">林孟庭</div>
+              <div class="pcred"><span class="en">seven years across kkbox, rock mobile and friday music</span><span class="zh">kkbox、滾石移動、friday 音樂等平台七年以上經驗</span></div>
+            </div>
+          </div>
+        </li>
+      </ul>
       <figure class="photo reveal-el">
         <img src="img/live-amber.jpg" alt="mosun on stage under a wall of amber light" width="1053" height="1600" loading="lazy" decoding="async">
         <figcaption class="cap">
